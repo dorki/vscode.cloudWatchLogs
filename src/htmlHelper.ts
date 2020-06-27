@@ -3,24 +3,40 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as _ from 'lodash';
 
+function formatTime(timeMs: string | number) {
+    return new Date(Number(timeMs)).toLocaleString(undefined, { hour12: false });
+}
+
 export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
 
-    function stringify(value: string) {
-        try {
-            return JSON.stringify(JSON.parse(value), null, 4);
-        }
-        catch {
-            return value;
-        }
-    }
+    const timeFields = ["@ingestionTime", "@timestamp"];
 
-    function getRow(fieldName: string, value: string): string {
-        return (`
-            <tr>
-                <td>${fieldName}</td>
-                <td><pre>${fieldName === "@ingestionTime" ? new Date(Number(value)).toLocaleString('he') : stringify(value)}</pre></td>
-            </tr>
-        `);
+    function getRecordRowsHtml() {
+        function stringify(fieldName: string, value: string) {
+            try {
+                return _.includes(timeFields, fieldName)
+                    ? `${formatTime(value)} (local)`
+                    : JSON.stringify(JSON.parse(value), null, 4);
+            }
+            catch {
+                return value;
+            }
+        }
+
+        function getRow(fieldName: string, value: string): string {
+            return (`
+                <tr>
+                    <td>${fieldName}</td>
+                    <td><pre>${stringify(fieldName, value)}</pre></td>
+                </tr>
+            `);
+        }
+
+        return _(logRecord).
+            keys().
+            sortBy(key => key.toLowerCase()).
+            map(key => getRow(key, logRecord[key])).
+            join("");
     }
 
     return (`
@@ -47,7 +63,7 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
                 <h1>Log record</h1>
                 <br>
                 <table>
-                ${Object.entries(logRecord).sort((a, b) => a.toLocaleString().toLowerCase().localeCompare(b.toLocaleString().toLowerCase())).map(logRecordField => getRow(logRecordField[0], logRecordField[1])).join("")}
+                ${getRecordRowsHtml()}
                 </table>
             </body>
         </html>
@@ -60,11 +76,13 @@ export function BuildQueryResultsHtml(
     startTimeMs: number,
     endTimeMs: number,
     fields: string[],
+    logGroups: string[],
     queryResults: AWS.CloudWatchLogs.QueryResults) {
 
     const specialColFields = {
         "MessageTemplate": "longCol",
-        "@timestamp": "medCol"
+        "@timestamp": "medCol",
+        "@message": "longCol"
     };
 
     function getTh(value: string): string {
@@ -115,15 +133,11 @@ export function BuildQueryResultsHtml(
                 <link rel="stylesheet" href="${pathPartsToUri('node_modules', 'datatables.net-dt', 'css', 'jquery.dataTables.min.css')}">
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('node_modules', 'jquery', 'dist', 'jquery.min.js')}"></script>
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('node_modules', 'datatables.net', 'js', 'jquery.dataTables.min.js')}"></script>
-                <style>
-                    pre {
-                        font-family: arial;
-                    }
-                </style>
             </head>
             <body>
                 <h1><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
-                <h3>Time range: ${new Date(startTimeMs).toLocaleString('he')} - ${new Date(endTimeMs).toLocaleString('he')} (Local time)</h3>
+                <h4>Time range: ${formatTime(startTimeMs)} - ${formatTime(endTimeMs)} (local)</h4>
+                <h4>Log groups: ${logGroups.join(", ")}</h4>
                 <pre>${query}</pre>
                 <div class="tableContainer">
                     <div class='toggler'>

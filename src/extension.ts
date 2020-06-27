@@ -11,9 +11,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	async function getEnvCredentials(env: string) {
 
-		function validateCredentials(credentials: AWS.Credentials) {
+		async function validateCredentials(credentials: AWS.Credentials) {
 			try {
-				new AWS.STS({ credentials }).getCallerIdentity();
+				await new AWS.STS({ credentials }).getCallerIdentity().promise();
 				return true;
 			}
 			catch {
@@ -136,6 +136,24 @@ export function activate(context: vscode.ExtensionContext) {
 		const creds = await getEnvCredentials(query.env);
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region: query.region });
 
+		let logGroups = query.logGroup.split(',');
+
+		if (query.logGroup.includes('*')) {
+			const describeLogGroupsResponse = await logs.describeLogGroups().promise();
+
+			logGroups =
+				_(logGroups).
+					map(logGroup => new RegExp(`^${logGroup.replace('*', '.*')}$`, "i")).
+					flatMap(
+						logGroupRegex =>
+							_.filter(
+								describeLogGroupsResponse.logGroups,
+								logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
+					map(logGroup => logGroup.logGroupName!).
+					uniq().
+					value();
+		}
+
 		const endTimeMs = Date.now();
 		const startTimeMS = endTimeMs - query.duration;
 		const startQueryResponse =
@@ -144,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 					startTime: startTimeMS / 1000,
 					endTime: endTimeMs / 1000,
 					queryString: query.cwQuery,
-					logGroupName: query.logGroup
+					logGroupNames: logGroups
 				}).
 				promise();
 
@@ -173,6 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
 						startTimeMS,
 						endTimeMs,
 						query.fields,
+						logGroups,
 						queryResultsResponse.results!);
 			}
 			while (queryResultsResponse.status !== "Complete");

@@ -87,3 +87,11 @@ tbody tr:nth-child(even) td {
 .toggler a {
 	cursor: pointer;
 }
+
+pre {
+	font-family: arial;
+}
+
+h4 {
+	margin: 0.7em 0em;
+}
