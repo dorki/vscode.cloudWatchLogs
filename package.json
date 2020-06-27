@@ -1,0 +1,68 @@
+{
+	"name": "cloudQ",
+	"displayName": "CloudWatchLogs Query",
+	"description": "Query cloudwatch logs using vscode",
+	"version": "0.0.3",
+	"icon": "cloud.png",
+	"publisher": "dorki",
+	"repository": "",
+	"engines": {
+		"vscode": "^1.34.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:extension.cloudWatchLogs"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.cloudWatchLogs",
+				"title": "CloudWatch logs query"
+			}
+		],
+		"configuration": [
+			{
+				"title": "CloudQ",
+				"properties": {
+					"cloudq.authenticationCommand": {
+						"type": "string",
+						"description": "This command will be used to authenticate to aws, include {env} if needed"
+					}
+				}
+			}
+		],
+		"keybindings": [
+			{
+				"command": "extension.cloudWatchLogs",
+				"key": "ctrl+enter",
+				"when": "editorTextFocus"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint . --ext .ts,.tsx",
+		"watch": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@types/node": "^12.12.0",
+		"@types/vscode": "^1.34.0",
+		"@typescript-eslint/eslint-plugin": "^3.0.2",
+		"@typescript-eslint/parser": "^3.0.2",
+		"eslint": "^7.1.0",
+		"typescript": "^3.9.4"
+	},
+	"dependencies": {
+		"@types/lodash": "^4.14.157",
+		"aws-sdk": "^2.700.0",
+		"datatables.net": "^1.10.21",
+		"datatables.net-dt": "^1.10.21",
+		"jquery": "^3.5.1",
+		"lodash": "^4.17.15",
+		"parse-duration": "^0.4.4"
+	}
+}

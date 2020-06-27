@@ -1,0 +1,89 @@
+.refreshButton {
+	background:linear-gradient(to bottom, #63b8ee 5%, #468ccf 100%);
+	background-color:#63b8ee;
+	border-radius:6px;
+	border:1px solid #3866a3;
+	display:inline-block;
+	cursor:pointer;
+	color:#14396a;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:6px 16px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #7cacde;
+}
+.refreshButton:hover {
+	background:linear-gradient(to bottom, #468ccf 5%, #63b8ee 100%);
+	background-color:#468ccf;
+}
+.refreshButton:active {
+	position:relative;
+	top:1px;
+}
+
+.longCol, .medCol, .shortCol {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+  
+.shortCol {
+	max-width:1vw;
+}
+
+.longCol {
+	max-width:20vw;
+}
+
+.medCol {
+	max-width: 2vw;
+}
+
+.btnCol {
+	width: 1px !important;
+}
+
+.tableContainer{
+	/* background-color: #36393d; */
+	border: 2px solid #36393d;
+	padding: 5px;
+	color: white;
+}
+
+.dataTables_wrapper .dataTables_length, 
+.dataTables_wrapper .dataTables_filter, 
+.dataTables_wrapper .dataTables_info, 
+.dataTables_wrapper .dataTables_processing, 
+.dataTables_wrapper .dataTables_paginate {
+  color:white !important;
+}
+
+table.dataTable.row-border tbody th, 
+table.dataTable.row-border tbody td, 
+table.dataTable.display tbody th, 
+table.dataTable.display tbody td {
+  border: 0px !important;
+} 
+
+thead tr th {
+	text-align: left;
+	background: #535353
+}
+	
+tbody tr td {
+    background: #252424;
+}
+
+tbody tr:nth-child(even) td {
+    background: #36393d;
+}
+
+.toggler {
+	padding-bottom: 10px;
+	border-bottom: 2px solid #36393d;
+}
+
+.toggler a {
+	cursor: pointer;
+}
