@@ -1,11 +1,11 @@
 {
-	"name": "cloudQ",
-	"displayName": "CloudWatchLogs Query",
+	"name": "cloudwatchlogs",
+	"displayName": "CloudWatchLogs client",
 	"description": "Query cloudwatch logs using vscode",
 	"version": "0.0.3",
-	"icon": "cloud.png",
+	"icon": "cloudwatchlogs.png",
 	"publisher": "dorki",
-	"repository": "",
+	"repository": "https://github.com/dorki/vscode.cloudWatchLogs",
 	"engines": {
 		"vscode": "^1.34.0"
 	},
@@ -13,30 +13,31 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.cloudWatchLogs"
+		"onCommand:extension.runQuery",
+		"onCommand:extension.testProgress"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.cloudWatchLogs",
-				"title": "CloudWatch logs query"
+				"command": "extension.runQuery",
+				"title": "excecute CloudWatchlogs query"
 			}
 		],
 		"configuration": [
 			{
-				"title": "CloudQ",
+				"title": "CloudWatchLogs",
 				"properties": {
-					"cloudq.authenticationCommand": {
+					"cloudwatchlogs.authenticationCommand": {
 						"type": "string",
-						"description": "This command will be used to authenticate to aws, include {env} if needed"
+						"markdownDescription": "This command will be used as first step in the authentication routine.\n\nUse this if you need to run excecutable to initilize [shared credentials profile file](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/create-shared-credentials-file.html).\n\nInclude `{env}` in the command if you need the extension to pass it from the query."
 					}
 				}
 			}
 		],
 		"keybindings": [
 			{
-				"command": "extension.cloudWatchLogs",
+				"command": "extension.runQuery",
 				"key": "ctrl+enter",
 				"when": "editorTextFocus"
 			}

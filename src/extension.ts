@@ -183,7 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
-			'extension.cloudWatchLogs',
+			'extension.runQuery',
 			async () => {
 				const query = parseQuery(getQueryText());
 				const panel =
