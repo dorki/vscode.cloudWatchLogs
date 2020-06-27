@@ -3,9 +3,9 @@
 	"displayName": "CloudWatchLogs client",
 	"description": "Query cloudwatch logs using vscode",
 	"version": "0.0.3",
-	"icon": "cloudwatchlogs.png",
+	"icon": "media/cloudwatchlogs.png",
 	"publisher": "dorki",
-	"repository": "https://github.com/dorki/vscode.cloudWatchLogs",
+	"repository": "https://github.com/dorki/vscode.cloudWatchLogs/",
 	"engines": {
 		"vscode": "^1.34.0"
 	},
@@ -13,8 +13,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.runQuery",
-		"onCommand:extension.testProgress"
+		"onCommand:extension.runQuery"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
