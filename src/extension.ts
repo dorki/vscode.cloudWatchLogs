@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return credentials;
 		}
 
-		const authenticationCommand = vscode.workspace.getConfiguration('cloudq').get("authenticationCommand") as string;
+		const authenticationCommand = vscode.workspace.getConfiguration('cloudwatchlogs').get("authenticationCommand") as string;
 		if (!_.isEmpty(authenticationCommand)) {
 			execSync(authenticationCommand.replace('{env}', env));
 		}
