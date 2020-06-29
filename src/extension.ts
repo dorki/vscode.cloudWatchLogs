@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			logGroups =
 				_(logGroups).
-					map(logGroup => new RegExp(`^${logGroup.replace('*', '.*')}$`, "i")).
+					map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
 					flatMap(
 						logGroupRegex =>
 							_.filter(
@@ -182,7 +182,7 @@ export function activate(context: vscode.ExtensionContext) {
 						getQueryResults({ queryId: startQueryResponse.queryId! }).
 						promise();
 
-				progress.report({ increment: 40, message: queryResultsResponse.status });
+				progress.report({ increment: 40 });
 
 				panel.webview.html =
 					BuildQueryResultsHtml(

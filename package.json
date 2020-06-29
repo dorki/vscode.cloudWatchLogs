@@ -20,7 +20,7 @@
 		"commands": [
 			{
 				"command": "extension.runQuery",
-				"title": "excecute CloudWatchlogs query"
+				"title": "Excecute CloudWatchLogs query"
 			}
 		],
 		"configuration": [
@@ -40,7 +40,16 @@
 				"key": "ctrl+enter",
 				"when": "editorTextFocus"
 			}
-		]
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "extension.runQuery",
+					"alt": "markdown.showPreviewToSide",
+					"group": "navigation"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
