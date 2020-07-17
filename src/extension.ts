@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 				startQuery({
 					startTime: startTimeMS / 1000,
 					endTime: endTimeMs / 1000,
-					queryString: query.cwQuery,
+					queryString: query.query,
 					logGroupNames: logGroups
 				}).
 				promise();
@@ -86,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
 				panel.webview.html =
 					BuildQueryResultsHtml(
 						context.extensionPath,
-						query.cwQuery,
+						query.query,
 						startTimeMS,
 						endTimeMs,
 						query.fields,
