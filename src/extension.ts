@@ -30,7 +30,43 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
 
-	async function executeQuery(query: Query, panel: vscode.WebviewPanel) {
+	function createQueryWebViewPanel(query: Query): vscode.WebviewPanel {
+		const panel =
+			vscode.window.createWebviewPanel(
+				`Query${Date.now()}`,
+				`Results ${query.env} ${query.logGroup}`,
+				{
+					viewColumn: vscode.ViewColumn.Active,
+					preserveFocus: true
+				},
+				{
+					enableFindWidget: true,
+					enableScripts: true,
+					retainContextWhenHidden: true
+				},
+			);
+
+		panel.webview.onDidReceiveMessage(
+			async message => {
+				console.log(message);
+				vscode.window.showInformationMessage(message);
+				switch (message.command) {
+					case 'goToLog':
+						await GoToLog(message.text, query.env, query.region);
+						return;
+					case 'refresh':
+						await executeQuery(parseQuery(message.query), panel);
+						return;
+				}
+			},
+			undefined,
+			context.subscriptions
+		);
+
+		return panel;
+	}
+
+	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 
 		const creds = await getEnvCredentials(query.env);
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region: query.region });
@@ -67,6 +103,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let queryResultsResponse: AWS.CloudWatchLogs.GetQueryResultsResponse;
 
+		const currentPanel = panel ?? createQueryWebViewPanel(query);
+
 		await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
 			cancellable: false,
@@ -83,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 40 });
 
-				panel.webview.html =
+				currentPanel.webview.html =
 					BuildQueryResultsHtml(
 						context.extensionPath,
 						query,
@@ -92,8 +130,6 @@ export function activate(context: vscode.ExtensionContext) {
 						query.fields,
 						logGroups,
 						queryResultsResponse.results!);
-
-				console.log(panel.webview.html)
 			}
 			while (queryResultsResponse.status !== "Complete");
 
@@ -106,36 +142,6 @@ export function activate(context: vscode.ExtensionContext) {
 			'extension.runQuery',
 			async () => {
 				const query = parseQuery(getFocusedTextSection());
-				const panel =
-					vscode.window.createWebviewPanel(
-						`Query${Date.now()}`,
-						`Results ${query.env} ${query.logGroup}`,
-						vscode.ViewColumn.Active,
-						{
-							enableFindWidget: true,
-							enableScripts: true,
-							retainContextWhenHidden: true
-						}
-					);
-
-				panel.webview.html = "loading...";
-				await executeQuery(query, panel);
-
-				panel.webview.onDidReceiveMessage(
-					async message => {
-						console.log(message);
-						vscode.window.showInformationMessage(message);
-						switch (message.command) {
-							case 'goToLog':
-								await GoToLog(message.text, query.env, query.region);
-								return;
-							case 'refresh':
-								await executeQuery(parseQuery(message.query), panel);
-								return;
-						}
-					},
-					undefined,
-					context.subscriptions
-				);
+				await executeQuery(query);
 			}));
 }
