@@ -159,7 +159,7 @@
 		"datatables.net": "^1.10.21",
 		"datatables.net-dt": "^1.10.21",
 		"jquery": "^3.5.1",
-		"lodash": "^4.17.15",
+		"lodash": "^4.17.19",
 		"parse-duration": "^0.4.4"
 	}
 }
