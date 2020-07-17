@@ -2,6 +2,7 @@ import * as AWS from 'aws-sdk';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as _ from 'lodash';
+import { Query } from './query';
 
 function formatTime(timeMs: string | number) {
     return new Date(Number(timeMs)).toLocaleString(undefined, { hour12: false });
@@ -72,7 +73,7 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
 
 export function BuildQueryResultsHtml(
     extensionPath: string,
-    query: string,
+    query: Query,
     startTimeMs: number,
     endTimeMs: number,
     fields: string[],
@@ -138,7 +139,7 @@ export function BuildQueryResultsHtml(
                 <h1><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
                 <h4>Time range: ${formatTime(startTimeMs)} - ${formatTime(endTimeMs)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
-                <pre>${query}</pre>
+                <pre contenteditable='true' id='rawQuery'>${query.raw}</pre>
                 <div class="tableContainer">
                     <div class='toggler'>
                         Toggle columns:
@@ -162,7 +163,7 @@ export function BuildQueryResultsHtml(
                             const vscode = acquireVsCodeApi();
                             return {
                                 goToLog: recordPtr => vscode.postMessage({ command: 'goToLog', text: recordPtr }),
-                                refresh: () => vscode.postMessage({ command: 'refresh' })
+                                refresh: () => vscode.postMessage({ command: 'refresh', query: $("#rawQuery")[0].textContent })
                             };
                         }()
                 </script>

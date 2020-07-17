@@ -86,12 +86,14 @@ export function activate(context: vscode.ExtensionContext) {
 				panel.webview.html =
 					BuildQueryResultsHtml(
 						context.extensionPath,
-						query.query,
+						query,
 						startTimeMS,
 						endTimeMs,
 						query.fields,
 						logGroups,
 						queryResultsResponse.results!);
+
+				console.log(panel.webview.html)
 			}
 			while (queryResultsResponse.status !== "Complete");
 
@@ -128,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
 								await GoToLog(message.text, query.env, query.region);
 								return;
 							case 'refresh':
-								await executeQuery(query, panel);
+								await executeQuery(parseQuery(message.query), panel);
 								return;
 						}
 					},
