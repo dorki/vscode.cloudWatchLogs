@@ -1,54 +1,15 @@
 import * as vscode from 'vscode';
 import * as AWS from 'aws-sdk';
 import * as _ from 'lodash';
-import { execSync } from 'child_process';
 import { BuildQueryResultsHtml, BuildLogRecordHtml } from './htmlHelper';
 import { Initialize as InitializeQueryFiles } from './queryFiles'
 import { getFocusedTextSection } from './windowUtils';
 import { parseQuery, Query } from './query';
+import { getEnvCredentials } from './authenticator';
 
 export function activate(context: vscode.ExtensionContext) {
 
 	InitializeQueryFiles(context);
-
-	let envToCredentials: { [id: string]: AWS.Credentials } = {};
-
-	async function getEnvCredentials(env: string) {
-
-		async function validateCredentials(credentials: AWS.Credentials) {
-			try {
-				await new AWS.STS({ credentials }).getCallerIdentity().promise();
-				return true;
-			}
-			catch {
-				return false;
-			}
-		}
-
-		let credentials = envToCredentials[env];
-		if (credentials != undefined && validateCredentials(credentials)) {
-			return credentials;
-		}
-
-		const authenticationCommand = vscode.workspace.getConfiguration('cloudwatchlogs').get("authenticationCommand") as string;
-		if (!_.isEmpty(authenticationCommand)) {
-			execSync(authenticationCommand.replace('{env}', env));
-		}
-
-		credentials = new AWS.SharedIniFileCredentials({ profile: env });
-		if (validateCredentials(credentials)) {
-			envToCredentials[env] = credentials;
-			return credentials;
-		}
-
-		credentials = new AWS.EnvironmentCredentials("AWS");
-		if (validateCredentials(credentials)) {
-			envToCredentials[env] = credentials;
-			return credentials;
-		}
-
-		throw "could not find credentials";
-	}
 
 	async function GoToLog(logPtr: string, env: string, region: string) {
 		const credentials = await getEnvCredentials(env);
@@ -68,8 +29,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
-
-
 
 	async function executeQuery(query: Query, panel: vscode.WebviewPanel) {
 
