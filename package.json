@@ -146,20 +146,20 @@
 		"watch": "tsc -watch -p ./"
 	},
 	"devDependencies": {
-		"@types/node": "^12.12.0",
+		"@types/node": "^12.12.50",
 		"@types/vscode": "^1.34.0",
-		"@typescript-eslint/eslint-plugin": "^3.0.2",
-		"@typescript-eslint/parser": "^3.0.2",
-		"eslint": "^7.1.0",
-		"typescript": "^3.9.4"
+		"@typescript-eslint/eslint-plugin": "^3.6.1",
+		"@typescript-eslint/parser": "^3.6.1",
+		"eslint": "^7.4.0",
+		"typescript": "^3.9.7"
 	},
 	"dependencies": {
 		"@types/lodash": "^4.14.157",
-		"aws-sdk": "^2.700.0",
+		"aws-sdk": "^2.715.0",
 		"datatables.net": "^1.10.21",
 		"datatables.net-dt": "^1.10.21",
 		"jquery": "^3.5.1",
-		"lodash": "^4.17.15",
+		"lodash": "^4.17.19",
 		"parse-duration": "^0.4.4"
 	}
 }

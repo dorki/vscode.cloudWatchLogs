@@ -27,7 +27,7 @@ export class QueryFilesProvider implements vscode.TreeDataProvider<QueryFile> {
     }
 
     refresh(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 }
 
