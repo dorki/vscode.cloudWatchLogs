@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import * as AWS from 'aws-sdk';
-import parseDuration from 'parse-duration';
+import * as _ from 'lodash';
 import { execSync } from 'child_process';
 import { BuildQueryResultsHtml, BuildLogRecordHtml } from './htmlHelper';
-import * as _ from 'lodash';
+import { Initialize as InitializeQueryFiles } from './queryFiles'
+import { getFocusedTextSection } from './windowUtils';
+import { parseQuery, Query } from './query';
 
 export function activate(context: vscode.ExtensionContext) {
+
+	InitializeQueryFiles(context);
 
 	let envToCredentials: { [id: string]: AWS.Credentials } = {};
 
@@ -46,46 +50,6 @@ export function activate(context: vscode.ExtensionContext) {
 		throw "could not find credentials";
 	}
 
-	function getQueryText() {
-		function isEditorDocumentLineEmpty(line: number) {
-			return vscode.window.activeTextEditor!.document.lineAt(line).isEmptyOrWhitespace;
-		}
-
-		function findQueryStart(line: number) {
-			while (line !== 0 && !isEditorDocumentLineEmpty(line)) {
-				line--;
-			}
-
-			return line;
-		}
-
-		function findQueryEnd(line: number) {
-			const editorEnd = vscode.window.activeTextEditor!.document.lineCount - 1;
-			while (line !== editorEnd && !isEditorDocumentLineEmpty(line)) {
-				line++;
-			}
-
-			return line;
-		}
-
-		if (!vscode.window.activeTextEditor!.selection.isEmpty) {
-			return vscode.window.activeTextEditor!.document.getText(vscode.window.activeTextEditor?.selection)
-		}
-
-		let startLine = findQueryStart(vscode.window.activeTextEditor!.selection.start.line);
-		let endLine = findQueryEnd(vscode.window.activeTextEditor!.selection.end.line);
-
-		const queryRange =
-			new vscode.Range(
-				new vscode.Position(startLine, 0),
-				new vscode.Position(
-					endLine,
-					vscode.window.activeTextEditor!.document.lineAt(endLine).range.end.character)
-			);
-
-		return vscode.window.activeTextEditor!.document.getText(queryRange).trim();
-	}
-
 	async function GoToLog(logPtr: string, env: string, region: string) {
 		const credentials = await getEnvCredentials(env);
 		const logs = new AWS.CloudWatchLogs({ credentials, region });
@@ -105,31 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
 
-	type Query = {
-		cwQuery: string,
-		fields: string[],
-		env: string,
-		region: string,
-		logGroup: string,
-		duration: number
-	}
 
-	function parseQuery(query: string): Query {
-		const [settings, ...queryLines] = query.trim().split("\n");
-		const cwQuery = queryLines.join("\n");
-		const fields = query.match(/fields (.+)/)![1].split(",").map(field => field.trim());
-		const [env, region, logGroup, durationStr] = settings.split(":");
-		const duration = parseDuration(durationStr)!;
-
-		return {
-			cwQuery,
-			fields,
-			env,
-			region,
-			logGroup,
-			duration
-		};
-	}
 
 	async function executeQuery(query: Query, panel: vscode.WebviewPanel) {
 
@@ -204,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(
 			'extension.runQuery',
 			async () => {
-				const query = parseQuery(getQueryText());
+				const query = parseQuery(getFocusedTextSection());
 				const panel =
 					vscode.window.createWebviewPanel(
 						`Query${Date.now()}`,

@@ -13,7 +13,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.runQuery"
+		"onCommand:extension.runQuery",
+		"onView:query-files"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -21,6 +22,42 @@
 			{
 				"command": "extension.runQuery",
 				"title": "Excecute CloudWatchLogs query"
+			},
+			{
+				"command": "extension.openQueryFileNewColumn",
+				"title": "Open in new column"
+			},
+			{
+				"command": "extension.addQueryFile",
+				"title": "Add query file",
+				"icon": {
+					"dark": "media/dark/add.svg",
+					"light": "media/light/add.svg"
+				}
+			},
+			{
+				"command": "extension.refreshQueryFiles",
+				"title": "Refresh",
+				"icon": {
+					"dark": "media/dark/refresh.svg",
+					"light": "media/light/refresh.svg"
+				}
+			},
+			{
+				"command": "extension.deleteQueryFile",
+				"title": "Delete query file",
+				"icon": {
+					"dark": "media/dark/delete.svg",
+					"light": "media/light/delete.svg"
+				}
+			},
+			{
+				"command": "extension.editQueryFile",
+				"title": "Edit query file name",
+				"icon": {
+					"dark": "media/dark/edit.svg",
+					"light": "media/light/edit.svg"
+				}
 			}
 		],
 		"configuration": [
@@ -48,8 +85,59 @@
 					"alt": "markdown.showPreviewToSide",
 					"group": "navigation"
 				}
+			],
+			"view/title": [
+				{
+					"command": "extension.addQueryFile",
+					"when": "view == query-files",
+					"group": "navigation"
+				},
+				{
+					"command": "extension.refreshQueryFiles",
+					"when": "view == query-files",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "extension.editQueryFile",
+					"when": "view == query-files",
+					"group": "inline"
+				},
+				{
+					"command": "extension.deleteQueryFile",
+					"when": "view == query-files",
+					"group": "inline"
+				},
+				{
+					"command": "extension.openQueryFileNewColumn",
+					"when": "view == query-files"
+				}
 			]
-		}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "cloudwatchlogs-view-container",
+					"title": "CloudWatchLogs Client",
+					"icon": "media/cloudwatchlogs-bnw2.png"
+				}
+			]
+		},
+		"views": {
+			"cloudwatchlogs-view-container": [
+				{
+					"id": "query-files",
+					"name": "Query files"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "query-files",
+				"contents": "No query files found \n[Add Qurery File](command:extension.addQueryFile)"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
