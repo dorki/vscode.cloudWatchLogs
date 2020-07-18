@@ -1,3 +1,11 @@
+### version 0.3.1
+- show authentication progress
+- support for field aliases (`as`) both in `fields` and in `display` commands
+- added action buttons to log record view (`copy to clipboard` and `show raw json`)
+- fix - results view opens too soon (in case of an error it used to be left blank)
+- fix - supports for neglecting the "fields" command
+- fix - closing results view while query in progress throw excpetion
+
 ### version 0.3.0
 - added new ConatinerView for storing query files
 - allow editing the query in the results view
