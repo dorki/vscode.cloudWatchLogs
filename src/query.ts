@@ -16,7 +16,8 @@ export type Query = {
     region: string,
     logGroup: string,
     duration: number,
-    raw: string
+    raw: string,
+    canceled?: boolean
 }
 
 function parseField(raw: string): Field {

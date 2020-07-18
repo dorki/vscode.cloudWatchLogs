@@ -89,6 +89,12 @@ export function activate(context: vscode.ExtensionContext) {
 			context.subscriptions
 		);
 
+		panel.onDidDispose(
+			() => query.canceled = true,
+			null,
+			context.subscriptions
+		);
+
 		return panel;
 	}
 
@@ -117,15 +123,23 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const endTimeMs = Date.now();
 		const startTimeMS = endTimeMs - query.duration;
-		const startQueryResponse =
-			await logs.
-				startQuery({
-					startTime: startTimeMS / 1000,
-					endTime: endTimeMs / 1000,
-					queryString: query.query,
-					logGroupNames: logGroups
-				}).
-				promise();
+
+		let startQueryResponse: AWS.CloudWatchLogs.StartQueryResponse;
+		try {
+			startQueryResponse =
+				await logs.
+					startQuery({
+						startTime: startTimeMS / 1000,
+						endTime: endTimeMs / 1000,
+						queryString: query.query,
+						logGroupNames: logGroups
+					}).
+					promise();
+		}
+		catch (error) {
+			vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
+			return;
+		}
 
 		let queryResultsResponse: AWS.CloudWatchLogs.GetQueryResultsResponse;
 
@@ -145,6 +159,10 @@ export function activate(context: vscode.ExtensionContext) {
 						getQueryResults({ queryId: startQueryResponse.queryId! }).
 						promise();
 
+				if (query.canceled) {
+					return;
+				}
+
 				progress.report({ increment: 40 });
 
 				currentPanel.webview.html =
@@ -156,7 +174,7 @@ export function activate(context: vscode.ExtensionContext) {
 						logGroups,
 						queryResultsResponse.results!);
 			}
-			while (queryResultsResponse.status !== "Complete");
+			while (queryResultsResponse.status !== "Complete" && !query.canceled);
 
 			progress.report({ increment: 100 });
 		});
