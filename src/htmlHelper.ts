@@ -76,7 +76,6 @@ export function BuildQueryResultsHtml(
     query: Query,
     startTimeMs: number,
     endTimeMs: number,
-    fields: string[],
     logGroups: string[],
     queryResults: AWS.CloudWatchLogs.QueryResults) {
 
@@ -87,7 +86,7 @@ export function BuildQueryResultsHtml(
     };
 
     function getTh(value: string): string {
-        return `<th>${value}<span class="resize-handle"></span></th>`;
+        return `<th>${value}</th>`;
     }
 
     function getTd(value: string | undefined): string {
@@ -104,7 +103,7 @@ export function BuildQueryResultsHtml(
         return (
             `<tr>
                 <td><button onclick="goToLog('${fieldNameToValueMap.get("@ptr")}')" />🔍</td>
-                ${fields.map(field => getTd(fieldNameToValueMap.get(field)))}
+                ${query.fieldNames.map(fieldName => getTd(fieldNameToValueMap.get(fieldName)))}
             </tr>`);
     }
 
@@ -112,16 +111,20 @@ export function BuildQueryResultsHtml(
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
     }
 
+    function getOriginalFieldName(field: string) {
+        return query.fieldAliasToName.get(field) ?? field;
+    }
+
     function getShortColIndexes() {
-        return _(fields).
-            map((field, index) => _.has(specialColFields, field) ? undefined : index + 1).
+        return _(query.fieldNames).
+            map((field, index) => _.has(specialColFields, getOriginalFieldName(field)) ? undefined : index + 1).
             filter().
             value();
     }
 
     function getSpecialColIndexes(specialField: string) {
-        return _(fields).
-            map((field, index) => _.get(specialColFields, field) === specialField ? index + 1 : undefined).
+        return _(query.fieldNames).
+            map((field, index) => _.get(specialColFields, getOriginalFieldName(field)) === specialField ? index + 1 : undefined).
             filter().
             value();
     }
@@ -143,13 +146,13 @@ export function BuildQueryResultsHtml(
                 <div class="tableContainer">
                     <div class='toggler'>
                         Toggle columns:
-                        ${fields.map((field, index) => `<a class="toggle-vis" data-column="${index + 1}">${field}</a>`).join(" - ")}
+                        ${query.fieldNames.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - ")}
                     </div>
                     <table id="resultsTable" class="display compact" style="width:100%">
                         <thead>
                             <tr>
                                 <th></th>
-                                ${fields.map(getTh).join("")}
+                                ${query.fieldNames.map(getTh).join("")}
                             </tr>
                         </thead>
                         <tbody>

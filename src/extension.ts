@@ -127,7 +127,6 @@ export function activate(context: vscode.ExtensionContext) {
 						query,
 						startTimeMS,
 						endTimeMs,
-						query.fields,
 						logGroups,
 						queryResultsResponse.results!);
 			}
