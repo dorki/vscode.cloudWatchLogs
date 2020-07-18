@@ -194,7 +194,7 @@ export function BuildQueryResultsHtml(
                                 scrollCollapse: true,
                                 orderClasses: false,
                                 columnDefs: [
-                                    { targets: [0], className: "btnCol" },
+                                    { targets: [0], className: "btnCol", orderable: false },
                                     { targets: [${getShortColIndexes().join(",")}], className: "shortCol" },
                                     { targets: [${getSpecialColIndexes("medCol").join(",")}], className: "medCol" },
                                     { targets: [${getSpecialColIndexes("longCol").join(",")}], className: "longCol" }
