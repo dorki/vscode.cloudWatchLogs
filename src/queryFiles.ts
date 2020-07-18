@@ -48,7 +48,10 @@ export function Initialize(context: vscode.ExtensionContext) {
 
                 await vscode.window.showTextDocument(
                     await vscode.workspace.openTextDocument(path.join(queryFilesPath, queryFileName)),
-                    vscode.ViewColumn.Active);
+                    {
+                        viewColumn: vscode.ViewColumn.Active,
+                        preview: false
+                    });
             }));
 
     context.subscriptions.push(
@@ -62,7 +65,10 @@ export function Initialize(context: vscode.ExtensionContext) {
 
                 await vscode.window.showTextDocument(
                     await vscode.workspace.openTextDocument(path.join(queryFilesPath, queryFileName)),
-                    vscode.ViewColumn.Beside);
+                    {
+                        viewColumn: vscode.ViewColumn.Beside,
+                        preview: false
+                    });
             }));
 
     context.subscriptions.push(
