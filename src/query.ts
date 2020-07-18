@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 
 const _defaultFields: Field[] = [{ name: "@timestamp" }, { name: "@message" }];
 
-export type Field = {
+type Field = {
     name: string,
     alias?: string
 }

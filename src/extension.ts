@@ -6,6 +6,7 @@ import { Initialize as InitializeQueryFiles } from './queryFiles'
 import { getFocusedTextSection } from './windowUtils';
 import { parseQuery, Query } from './query';
 import { getEnvCredentials } from './authenticator';
+import * as clipboardy from 'clipboardy';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -23,9 +24,36 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.ViewColumn.Active,
 				{
 					enableFindWidget: true,
+					enableScripts: true,
 					retainContextWhenHidden: true
 				}
 			);
+
+		panel.webview.onDidReceiveMessage(
+			async message => {
+				const logJson =
+					JSON.stringify(
+						logRecordResponse.logRecord!,
+						null,
+						4);
+				switch (message.command) {
+					case 'copy':
+						clipboardy.writeSync(logJson);
+						vscode.window.showInformationMessage("log copied to clipboard");
+						return;
+					case 'openRaw':
+						await vscode.window.showTextDocument(
+							await vscode.workspace.openTextDocument({
+								content: logJson,
+								language: "json"
+							}),
+							vscode.ViewColumn.Active);
+						return;
+				}
+			},
+			undefined,
+			context.subscriptions
+		);
 
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
@@ -48,8 +76,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 		panel.webview.onDidReceiveMessage(
 			async message => {
-				console.log(message);
-				vscode.window.showInformationMessage(message);
 				switch (message.command) {
 					case 'goToLog':
 						await GoToLog(message.text, query.env, query.region);

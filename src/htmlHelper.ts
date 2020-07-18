@@ -61,12 +61,24 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
                 </style>
             </head>
             <body>
-                <h1>Log record</h1>
-                <br>
+                <div style='padding:18px 0px'>
+                    <h1 style='display:inline'>Log record</h1> <br>
+                    <a href onClick='copy()'>copy to clipboard</a> - <a href onClick='openRaw()'>open raw json</a>
+                </div>
                 <table>
                 ${getRecordRowsHtml()}
                 </table>
             </body>
+            <script>
+                let {copy, openRaw} =
+                    function () {
+                        const vscode = acquireVsCodeApi();
+                        return {
+                            copy: () => vscode.postMessage({ command: 'copy' }),
+                            openRaw: () => vscode.postMessage({ command: 'openRaw' })
+                        };
+                    }()
+            </script>
         </html>
         `);
 }
