@@ -1,3 +1,8 @@
+### version 0.3.2
+- support custom query files locations (can be added in extension's setting)
+- fix - results view - button's column should not be sortable
+- fix - query files should not open in perview mode
+
 ### version 0.3.1
 - show authentication progress
 - support for field aliases (`as`) both in `fields` and in `display` commands
