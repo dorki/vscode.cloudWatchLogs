@@ -67,6 +67,10 @@
 					"cloudwatchlogs.authenticationCommand": {
 						"type": "string",
 						"markdownDescription": "This command will be used as first step in the authentication routine.\n\nUse this if you need to run excecutable to initilize [shared credentials profile file](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/create-shared-credentials-file.html).\n\nInclude `{env}` in the command if you need the extension to pass it from the query."
+					},
+					"cloudwatchlogs.queryFilesFolders": {
+						"type": "string",
+						"markdownDescription": "Add folders that will contain query files.\n\nSeperate paths with `;`"
 					}
 				}
 			}
@@ -101,17 +105,17 @@
 			"view/item/context": [
 				{
 					"command": "extension.editQueryFile",
-					"when": "view == query-files",
+					"when": "view == query-files && viewItem == QueryFile",
 					"group": "inline"
 				},
 				{
 					"command": "extension.deleteQueryFile",
-					"when": "view == query-files",
+					"when": "view == query-files && viewItem == QueryFile",
 					"group": "inline"
 				},
 				{
 					"command": "extension.openQueryFileNewColumn",
-					"when": "view == query-files"
+					"when": "view == query-files && viewItem == QueryFile"
 				}
 			]
 		},

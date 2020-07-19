@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as _ from 'lodash';
-import { QueryFilesProvider } from './queryFilesProvider';
+import { QueryFile, QueryFilesProvider } from './queryFilesProvider';
 import * as fs from './fs'
 
 async function getNewQueryFileName(queryFilesPath: string, existingName?: string): Promise<string | undefined> {
@@ -40,14 +40,9 @@ export function Initialize(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'extension.openQueryFile',
-            async (item: vscode.TreeItem) => {
-                const queryFileName = item.label;
-                if (!queryFileName) {
-                    return;
-                }
-
+            async (queryFile: QueryFile) => {
                 await vscode.window.showTextDocument(
-                    await vscode.workspace.openTextDocument(path.join(queryFilesPath, queryFileName)),
+                    await vscode.workspace.openTextDocument(path.join(queryFile.fileFolderPath, queryFile.label)),
                     {
                         viewColumn: vscode.ViewColumn.Active,
                         preview: false
@@ -57,14 +52,9 @@ export function Initialize(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'extension.openQueryFileNewColumn',
-            async (item: vscode.TreeItem) => {
-                const queryFileName = item.label;
-                if (!queryFileName) {
-                    return;
-                }
-
+            async (queryFile: QueryFile) => {
                 await vscode.window.showTextDocument(
-                    await vscode.workspace.openTextDocument(path.join(queryFilesPath, queryFileName)),
+                    await vscode.workspace.openTextDocument(path.join(queryFile.fileFolderPath, queryFile.label)),
                     {
                         viewColumn: vscode.ViewColumn.Beside,
                         preview: false
@@ -75,9 +65,32 @@ export function Initialize(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'extension.addQueryFile',
             async () => {
-                const newQeuryFileName = await getNewQueryFileName(queryFilesPath);
+
+                const queryFilesFoldersSettings = vscode.workspace.getConfiguration('cloudwatchlogs').get("queryFilesFolders") as string;
+                const queryFilesFolderPaths = queryFilesFoldersSettings ? queryFilesFoldersSettings.split(";") : [];
+                const folderNameToPath =
+                    _(queryFilesFolderPaths).
+                        map(queryFilesFolderPath => queryFilesFolderPath.trim()).
+                        keyBy(queryFilesFolderPath => path.basename(queryFilesFolderPath)).
+                        value();
+
+                let selectedFolderPath: string | undefined = queryFilesPath;
+                if (!_.isEmpty(folderNameToPath)) {
+                    folderNameToPath["default"] = queryFilesPath;
+                    const folderName =
+                        await vscode.window.showQuickPick(_.keys(folderNameToPath), {
+                            placeHolder: 'select folder'
+                        });
+                    selectedFolderPath = folderName && folderNameToPath[folderName];
+                }
+
+                if (!selectedFolderPath) {
+                    return;
+                }
+
+                const newQeuryFileName = await getNewQueryFileName(selectedFolderPath);
                 if (newQeuryFileName) {
-                    fs.createFile(queryFilesPath, newQeuryFileName);
+                    fs.createFile(selectedFolderPath, newQeuryFileName);
                     queryFilesProvider.refresh()
                 }
             }));
@@ -85,16 +98,10 @@ export function Initialize(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'extension.editQueryFile',
-            async (item: vscode.TreeItem) => {
-
-                const existingQueryFileName = item.label;
-                if (!existingQueryFileName) {
-                    return;
-                }
-
-                const newQeuryFileName = await getNewQueryFileName(queryFilesPath, existingQueryFileName);
+            async (queryFile: QueryFile) => {
+                const newQeuryFileName = await getNewQueryFileName(queryFile.fileFolderPath, queryFile.label);
                 if (newQeuryFileName) {
-                    fs.renameFile(queryFilesPath, existingQueryFileName, newQeuryFileName);
+                    fs.renameFile(queryFile.fileFolderPath, queryFile.label, newQeuryFileName);
                     queryFilesProvider.refresh()
                 }
             }));
@@ -107,18 +114,13 @@ export function Initialize(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'extension.deleteQueryFile',
-            async (item: vscode.TreeItem) => {
-                const queryFileName = item.label;
-                if (!queryFileName) {
-                    return;
-                }
-
+            async (queryFile: QueryFile) => {
                 const result = await vscode.window.showQuickPick(['Delete', 'Cancel'], {
-                    placeHolder: `Are you sure you want to delete ${queryFileName}`
+                    placeHolder: `Are you sure you want to delete ${queryFile.label}`
                 });
 
                 if (result === 'Delete') {
-                    fs.deleteFile(queryFilesPath, queryFileName);
+                    fs.deleteFile(queryFile.fileFolderPath, queryFile.label);
                     queryFilesProvider.refresh()
                 }
             }));
