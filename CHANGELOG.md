@@ -1,3 +1,8 @@
+### version 0.3.3
+- support time range
+- extract results table column names from results and not from query
+- refresh results view by pressing Ctrl+Enter in the raw query edit box
+
 ### version 0.3.2
 - support custom query files locations (can be added in extension's setting)
 - fix - results view - button's column should not be sortable
