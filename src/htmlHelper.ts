@@ -151,7 +151,7 @@ export function BuildQueryResultsHtml(
                 <h1><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
                 <h4>Time range: ${formatTime(startTimeMs)} - ${formatTime(endTimeMs)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
-                <pre contenteditable='true' id='rawQuery'>${query.raw}</pre>
+                <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()">${query.raw}</pre>
                 <div class="tableContainer">
                     <div class='toggler'>
                         Toggle columns:
@@ -220,6 +220,13 @@ export function BuildQueryResultsHtml(
                             }
                         }
                     );
+                </script>
+                <script>
+                    function refreshOnCtrlEnter() {
+                        if(event.key === 'Enter' && event.ctrlKey) {
+                            refresh()
+                        }
+                    }
                 </script>
             </body>
         </html>
