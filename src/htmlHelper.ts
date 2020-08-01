@@ -91,10 +91,17 @@ export function BuildQueryResultsHtml(
     logGroups: string[],
     queryResults: AWS.CloudWatchLogs.QueryResults) {
 
-    const specialColFields = {
-        "MessageTemplate": "longCol",
-        "@timestamp": "medCol",
-        "@message": "longCol"
+    const fields =
+        _(queryResults).
+            flatMap(queryResult => queryResult.map(_ => _.field!)).
+            uniq().
+            without("@ptr").
+            value();
+
+    const fieldTypeToMatchFunction = {
+        "shortCol": (field: string) => !_.includes(field, "time") && !_.includes(field, "message") && !_.includes(field, "msg"),
+        "medCol": (field: string) => _.includes(field, "time"),
+        "longCol": (field: string) => _.includes(field, "message") || _.includes(field, "msg")
     };
 
     function getTh(value: string): string {
@@ -115,7 +122,7 @@ export function BuildQueryResultsHtml(
         return (
             `<tr>
                 <td><button onclick="goToLog('${fieldNameToValueMap.get("@ptr")}')" />🔍</td>
-                ${query.fieldNames.map(fieldName => getTd(fieldNameToValueMap.get(fieldName)))}
+                ${fields.map(fieldName => getTd(fieldNameToValueMap.get(fieldName)))}
             </tr>`);
     }
 
@@ -123,20 +130,10 @@ export function BuildQueryResultsHtml(
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
     }
 
-    function getOriginalFieldName(field: string) {
-        return query.fieldAliasToName.get(field) ?? field;
-    }
-
-    function getShortColIndexes() {
-        return _(query.fieldNames).
-            map((field, index) => _.has(specialColFields, getOriginalFieldName(field)) ? undefined : index + 1).
-            filter().
-            value();
-    }
-
-    function getSpecialColIndexes(specialField: string) {
-        return _(query.fieldNames).
-            map((field, index) => _.get(specialColFields, getOriginalFieldName(field)) === specialField ? index + 1 : undefined).
+    function getColTypeIndexes(specialField: "shortCol" | "medCol" | "longCol") {
+        return _(fields).
+            map(field => field.toLowerCase()).
+            map((field, index) => fieldTypeToMatchFunction[specialField](field) ? index + 1 : undefined).
             filter().
             value();
     }
@@ -158,13 +155,13 @@ export function BuildQueryResultsHtml(
                 <div class="tableContainer">
                     <div class='toggler'>
                         Toggle columns:
-                        ${query.fieldNames.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - ")}
+                        ${fields.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - ")}
                     </div>
                     <table id="resultsTable" class="display compact" style="width:100%">
                         <thead>
                             <tr>
                                 <th></th>
-                                ${query.fieldNames.map(getTh).join("")}
+                                ${fields.map(getTh).join("")}
                             </tr>
                         </thead>
                         <tbody>
@@ -193,11 +190,12 @@ export function BuildQueryResultsHtml(
                                 scrollY: '60vh',
                                 scrollCollapse: true,
                                 orderClasses: false,
+                                colReorder: true,
                                 columnDefs: [
                                     { targets: [0], className: "btnCol", orderable: false },
-                                    { targets: [${getShortColIndexes().join(",")}], className: "shortCol" },
-                                    { targets: [${getSpecialColIndexes("medCol").join(",")}], className: "medCol" },
-                                    { targets: [${getSpecialColIndexes("longCol").join(",")}], className: "longCol" }
+                                    { targets: [${getColTypeIndexes("shortCol").join(",")}], className: "shortCol" },
+                                    { targets: [${getColTypeIndexes("medCol").join(",")}], className: "medCol" },
+                                    { targets: [${getColTypeIndexes("longCol").join(",")}], className: "longCol" }
                                 ],
                                 createdRow: function (row) {
                                     $(row).find("td, th").each(function(){
