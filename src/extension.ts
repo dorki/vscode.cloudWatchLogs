@@ -121,16 +121,13 @@ export function activate(context: vscode.ExtensionContext) {
 					value();
 		}
 
-		const endTimeMs = Date.now();
-		const startTimeMS = endTimeMs - query.duration;
-
 		let startQueryResponse: AWS.CloudWatchLogs.StartQueryResponse;
 		try {
 			startQueryResponse =
 				await logs.
 					startQuery({
-						startTime: startTimeMS / 1000,
-						endTime: endTimeMs / 1000,
+						startTime: query.times.start / 1000,
+						endTime: query.times.end / 1000,
 						queryString: query.query,
 						logGroupNames: logGroups
 					}).
@@ -147,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
-			cancellable: false,
+			cancellable: true,
 			title: 'Loading...'
 		}, async (progress) => {
 
@@ -169,8 +166,6 @@ export function activate(context: vscode.ExtensionContext) {
 					BuildQueryResultsHtml(
 						context.extensionPath,
 						query,
-						startTimeMS,
-						endTimeMs,
 						logGroups,
 						queryResultsResponse.results!);
 			}

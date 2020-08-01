@@ -86,8 +86,6 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
 export function BuildQueryResultsHtml(
     extensionPath: string,
     query: Query,
-    startTimeMs: number,
-    endTimeMs: number,
     logGroups: string[],
     queryResults: AWS.CloudWatchLogs.QueryResults) {
 
@@ -149,7 +147,7 @@ export function BuildQueryResultsHtml(
             </head>
             <body>
                 <h1><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
-                <h4>Time range: ${formatTime(startTimeMs)} - ${formatTime(endTimeMs)} (local)</h4>
+                <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
                 <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()">${query.raw}</pre>
                 <div class="tableContainer">

@@ -10,49 +10,23 @@ type Field = {
 
 export type Query = {
     query: string,
-    fieldNames: string[],
-    fieldAliasToName: Map<string, string>,
     env: string,
     region: string,
     logGroup: string,
-    duration: number,
+    times: { start: number, end: number },
     raw: string,
     canceled?: boolean
 }
 
-function parseField(raw: string): Field {
-    const split = raw.split(" as ");
+function parseTimes(durationStr: string) {
+    const now = Date.now();
+    const [start, end] = durationStr.split("->");
     return {
-        name: split[0].trim(),
-        alias: split[1]?.trim()
+        start: Date.parse(start) || now - parseDuration(start)!,
+        end: Date.parse(end) || now - parseDuration(end)!
     };
 }
 
-function parseFields(text: string): [string[], Map<string, string>] {
-    const fields =
-        text.
-            match(/fields (?<fields>[^\|]*[^\s\|])/)?.
-            groups?.["fields"].
-            split(",").
-            map(parseField)
-
-    const displayFields =
-        [...(text.matchAll(/display (?<fields>[^\|]*[^\s\|])/g))].
-            pop()?.
-            groups?.["fields"].
-            split(",").
-            map(parseField)
-
-    const fieldNames = (displayFields ?? fields ?? _defaultFields).map(_ => _.alias ?? _.name);
-
-    const fieldAliasToName =
-        new Map(
-            _.concat(fields, displayFields).
-                filter(field => field?.alias).
-                map(field => [field!.alias!, field!.name]));
-
-    return [fieldNames, fieldAliasToName];
-}
 
 export function parseQuery(text: string): Query {
     const [settings, ...queryLines] =
@@ -60,18 +34,15 @@ export function parseQuery(text: string): Query {
             text.trim().split("\n"),
             line => !line.startsWith("#"));
     const query = queryLines.join("\n");
-    const [fieldNames, fieldAliasToName] = parseFields(text);
-    const [env, region, logGroup, durationStr] = settings.split(":");
-    const duration = parseDuration(durationStr)!;
+    const [env, region, logGroup, ...durationStr] = settings.split(":");
+    const times = parseTimes(durationStr.join(":"));
 
     return {
         query,
-        fieldNames,
-        fieldAliasToName,
         env,
         region,
         logGroup,
-        duration,
+        times,
         raw: text
     };
 }
