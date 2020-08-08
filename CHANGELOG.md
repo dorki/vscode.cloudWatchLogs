@@ -1,3 +1,6 @@
+### version 0.3.4
+- fix query time range parsing
+
 ### version 0.3.3
 - support time range
 - extract results table column names from results and not from query
