@@ -20,7 +20,7 @@ export type Query = {
 
 function parseTimes(durationStr: string) {
     const now = Date.now();
-    const [start, end] = durationStr.split("->");
+    const [start, end] = durationStr.trim().split("->");
     return {
         start: Date.parse(start) || now - parseDuration(start)!,
         end: Date.parse(end) || now - parseDuration(end)!
