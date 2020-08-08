@@ -2,7 +2,7 @@
 	"name": "cloudwatchlogs",
 	"displayName": "CloudWatchLogs client",
 	"description": "Query cloudwatch logs using vscode",
-	"version": "0.3.3",
+	"version": "0.3.4",
 	"icon": "media/cloudwatchlogs.png",
 	"publisher": "dorki",
 	"repository": "https://github.com/dorki/vscode.cloudWatchLogs/",
