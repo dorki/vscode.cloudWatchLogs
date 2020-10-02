@@ -16,6 +16,7 @@ export type Query = {
     times: { start: number, end: number },
     raw: string,
     canceled?: boolean
+    queryResults?: AWS.CloudWatchLogs.QueryResults
 }
 
 function parseTimes(durationStr: string) {

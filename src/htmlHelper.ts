@@ -146,7 +146,10 @@ export function BuildQueryResultsHtml(
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('node_modules', 'datatables.net', 'js', 'jquery.dataTables.min.js')}"></script>
             </head>
             <body>
-                <h1><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
+                <div style='padding:18px 0px'>
+                    <h1 style='display:inline'><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
+                    <a href onClick='openRaw()'>open raw json</a>
+                </div>
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
                 <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()">${query.raw}</pre>
@@ -168,11 +171,12 @@ export function BuildQueryResultsHtml(
                     </table>
                 </div>
                 <script>
-                    let {goToLog, refresh} =
+                    let {goToLog, openRaw, refresh} =
                         function () {
                             const vscode = acquireVsCodeApi();
                             return {
                                 goToLog: recordPtr => vscode.postMessage({ command: 'goToLog', text: recordPtr }),
+                                openRaw: () => vscode.postMessage({ command: 'openRaw'}),
                                 refresh: () => vscode.postMessage({ command: 'refresh', query: $("#rawQuery")[0].textContent })
                             };
                         }()

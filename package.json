@@ -21,7 +21,7 @@
 		"commands": [
 			{
 				"command": "extension.runQuery",
-				"title": "Excecute CloudWatchLogs query"
+				"title": "Execute CloudWatchLogs query"
 			},
 			{
 				"command": "extension.openQueryFileNewColumn",
@@ -159,6 +159,7 @@
 	},
 	"dependencies": {
 		"@types/lodash": "^4.14.157",
+		"as-table": "^1.0.55",
 		"aws-sdk": "^2.715.0",
 		"clipboardy": "^2.3.0",
 		"datatables.net": "^1.10.21",

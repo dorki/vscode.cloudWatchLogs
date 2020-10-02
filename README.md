@@ -15,10 +15,10 @@ fields @timestamp, Level, MessageTemplate
 - `env`: name of environment to query, should usually correspond with [aws shared credentials profile][1] that will be used to run the query
 - `region`: the [region][3] to run query in, eg. 'us-east-1' (without the quotes)
 - `log-group-name`: the [log group][2] to query, you can specify multiple names with "," as seperator or using wildcards ("*")
-- `duration`: the time range in duration human readable syntax, eg. 1h, 30m, 2d etc..
+- `duration`: the time range in duration human readable syntax, eg. 1h, 30m, 2d etc.. Its also support explicit time range with "->". For example, 2020-09-03T01:40+00:00->2020-09-03T01:50+00:00 (omit the +00 to use local time)
 
 ### usage
-just make sure your curser is somewhere inside a query and press `ctrl`+`enter` or run vscode command `excecute CloudWatchlogs query`
+just make sure your curser is somewhere inside a query and press `ctrl`+`enter` or run vscode command `Execute CloudWatchlogs query`
 ![simpleQuery][simpleQuery]
 
 you can also highlight any part of existing query (as long as it contains the first line of args as mentions before)

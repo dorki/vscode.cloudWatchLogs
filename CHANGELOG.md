@@ -1,3 +1,6 @@
+### version 0.3.5
+- add table export to the results window
+
 ### version 0.3.4
 - fix query time range parsing
 

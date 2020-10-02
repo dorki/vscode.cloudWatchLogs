@@ -7,6 +7,7 @@ import { getFocusedTextSection } from './windowUtils';
 import { parseQuery, Query } from './query';
 import { getEnvCredentials } from './authenticator';
 import * as clipboardy from 'clipboardy';
+import * as asTable from 'as-table';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -58,6 +59,38 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
 
+	function formatResultsRawTable(query: Query): string {
+		const table = [];
+
+		const fields =
+			_(query.queryResults).
+				flatMap(queryResult => queryResult.map(_ => _.field!)).
+				uniq().
+				without("@ptr").
+				value();
+
+		for (const queryResult of query.queryResults!) {
+			const fieldNameToValueMap =
+				new Map(
+					queryResult.map(
+						queryResultField => [
+							queryResultField.field,
+							queryResultField.value]));
+
+			const raw: { [id: string]: string } = {};
+			for (const fieldName of fields) {
+				const fieldValue = fieldNameToValueMap.get(fieldName);
+				if (fieldValue != undefined) {
+					raw[fieldName] = fieldValue;
+				}
+			}
+
+			table.push(raw);
+		}
+
+		return asTable.configure({ delimiter: " | " })(table);
+	}
+
 	function createQueryWebViewPanel(query: Query): vscode.WebviewPanel {
 		const panel =
 			vscode.window.createWebviewPanel(
@@ -80,6 +113,13 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'goToLog':
 						await GoToLog(message.text, query.env, query.region);
 						return;
+					case 'openRaw':
+						await vscode.window.showTextDocument(
+							await vscode.workspace.openTextDocument({
+								content: formatResultsRawTable(query),
+								language: "json"
+							}),
+							vscode.ViewColumn.Active);
 					case 'refresh':
 						await executeQuery(parseQuery(message.query), panel);
 						return;
@@ -99,7 +139,6 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
-
 		const creds = await getEnvCredentials(query.env);
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region: query.region });
 
@@ -162,12 +201,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 40 });
 
-				currentPanel.webview.html =
-					BuildQueryResultsHtml(
-						context.extensionPath,
-						query,
-						logGroups,
-						queryResultsResponse.results!);
+				// dont refresh if there are no new results
+				if (query.queryResults == undefined ||
+					query.queryResults.length !== queryResultsResponse.results?.length) {
+					query.queryResults = queryResultsResponse.results;
+					currentPanel.webview.html =
+						BuildQueryResultsHtml(
+							context.extensionPath,
+							query,
+							logGroups,
+							queryResultsResponse.results!);
+				}
 			}
 			while (queryResultsResponse.status !== "Complete" && !query.canceled);
 
