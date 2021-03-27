@@ -121,7 +121,8 @@ export function activate(context: vscode.ExtensionContext) {
 							}),
 							vscode.ViewColumn.Active);
 					case 'refresh':
-						await executeQuery(parseQuery(message.query), panel);
+						query = parseQuery(message.query)
+						await executeQuery(query, panel);
 						return;
 				}
 			},
