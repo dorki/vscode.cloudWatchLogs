@@ -213,6 +213,8 @@ export function activate(context: vscode.ExtensionContext) {
 							logGroups,
 							queryResultsResponse.results!);
 				}
+
+				await new Promise(resolve => setTimeout(resolve, 1000));
 			}
 			while (queryResultsResponse.status !== "Complete" && !query.canceled);
 

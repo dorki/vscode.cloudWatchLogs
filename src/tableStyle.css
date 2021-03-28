@@ -66,6 +66,10 @@ table.dataTable.display tbody td {
   border: 0px !important;
 } 
 
+.dataTables_wrapper .dataTables_filter input {
+	background-color: white !important;
+}
+
 thead tr th {
 	text-align: left;
 	background: #535353
