@@ -164,7 +164,8 @@ export function activate(context: vscode.ExtensionContext) {
 						startTime: query.times.start / 1000,
 						endTime: query.times.end / 1000,
 						queryString: query.query,
-						logGroupNames: logGroups
+						logGroupNames: logGroups,
+						limit: query.maxResults
 					}).
 					promise();
 		}

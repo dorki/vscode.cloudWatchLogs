@@ -7,6 +7,7 @@ export type Query = {
     region: string,
     logGroup: string,
     times: { start: number, end: number },
+    maxResults: number,
     raw: string,
     canceled?: boolean
     queryResults?: AWS.CloudWatchLogs.QueryResults
@@ -29,6 +30,20 @@ export function parseQuery(text: string): Query {
             text.trim().split("\n"),
             line => !line.startsWith("#"));
     const query = queryLines.join("\n");
+
+    if (settings.includes(";")) {
+        const [env, region, logGroup, durations, maxResults] = settings.split(";");
+        return {
+            query,
+            env,
+            region,
+            logGroup,
+            times: parseTimes(durations),
+            maxResults: parseInt(maxResults ?? 1000),
+            raw: text
+        };
+    }
+
     const [env, region, logGroup, ...durationStr] = settings.split(":");
     const times = parseTimes(durationStr.join(":"));
 
@@ -38,6 +53,7 @@ export function parseQuery(text: string): Query {
         region,
         logGroup,
         times,
+        maxResults: 1000,
         raw: text
     };
 }
