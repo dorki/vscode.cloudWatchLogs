@@ -60,33 +60,20 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.html = BuildLogRecordHtml(logRecordResponse.logRecord!);
 	}
 
-	function formatResultsRawTable(query: Query): string {
+	function formatResultsRawTable(fieldNames: string[], rows: string[][]): string {
 		const table = [];
 
-		const fields =
-			_(query.queryResults).
-				flatMap(queryResult => queryResult.map(_ => _.field!)).
-				uniq().
-				without("@ptr").
-				value();
+		for (const row of rows) {
 
-		for (const queryResult of query.queryResults!) {
-			const fieldNameToValueMap =
-				new Map(
-					queryResult.map(
-						queryResultField => [
-							queryResultField.field,
-							queryResultField.value]));
+			const txtTableRow: { [id: string]: string } = {};
 
-			const raw: { [id: string]: string } = {};
-			for (const fieldName of fields) {
-				const fieldValue = fieldNameToValueMap.get(fieldName);
-				if (fieldValue != undefined) {
-					raw[fieldName] = fieldValue;
+			for (const [fieldName, value] of _.zip(fieldNames, row)) {
+				if (value != undefined) {
+					txtTableRow[fieldName!] = value;
 				}
 			}
 
-			table.push(raw);
+			table.push(txtTableRow);
 		}
 
 		return asTable.configure({ delimiter: " | " })(table);
@@ -117,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'openRaw':
 						await vscode.window.showTextDocument(
 							await vscode.workspace.openTextDocument({
-								content: formatResultsRawTable(query),
+								content: formatResultsRawTable(message.fieldNames, message.rows),
 								language: "json"
 							}),
 							vscode.ViewColumn.Active);

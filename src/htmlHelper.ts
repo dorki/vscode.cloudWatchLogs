@@ -122,34 +122,7 @@ export function BuildQueryResultsHtml(
                         </tbody>
                     </table>
                 </div>
-                <script>
-                    let {goToLog, openRaw, refresh} =
-                        function () {
-                            const vscode = acquireVsCodeApi();
-                            return {
-                                goToLog: recordPtr => vscode.postMessage({ command: 'goToLog', text: recordPtr }),
-                                openRaw: () => vscode.postMessage({ command: 'openRaw'}),
-                                refresh: () => vscode.postMessage({ command: 'refresh', query: $("#rawQuery")[0].textContent })
-                            };
-                        }()
-                </script>
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('src', 'script.js')}"></script>
-                <script>
-                    $('.tableContainer')[0].childNodes.forEach(
-                        childNode => {
-                            if(childNode.textContent.includes(',,')){
-                                childNode.remove();
-                            }
-                        }
-                    );
-                </script>
-                <script>
-                    function refreshOnCtrlEnter() {
-                        if(event.key === 'Enter' && event.ctrlKey) {
-                            refresh()
-                        }
-                    }
-                </script>
             </body>
         </html>
         `);

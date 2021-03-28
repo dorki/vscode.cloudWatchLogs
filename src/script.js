@@ -63,7 +63,7 @@ function handleResults(fieldNames, queryResults) {
 
     $('#resultsCount').text(queryResults.length);
 
-    const table = $('#resultsTable').DataTable();
+    const table = $('#resultsTable').DataTable().clear();
 
     for (queryResult of queryResults) {
         const fieldNameToValueMap =
@@ -84,7 +84,6 @@ function handleResults(fieldNames, queryResults) {
 
 $(document).ready(function () {
     window.addEventListener('message', event => {
-        debugger;
         const message = event.data;
         switch (message.command) {
             case 'results':
@@ -103,3 +102,41 @@ $(document).ready(function () {
         }
     });
 });
+
+// consts function for page events
+const vscode = acquireVsCodeApi();
+const goToLog = recordPtr => vscode.postMessage({ command: 'goToLog', text: recordPtr });
+const refresh = () => vscode.postMessage({ command: 'refresh', query: $("#rawQuery")[0].textContent });
+const refreshOnCtrlEnter = () => {
+    if (event.key === 'Enter' && event.ctrlKey) {
+        refresh()
+    }
+}
+const openRaw = () => {
+
+    const table = $('#resultsTable').DataTable();
+    const visibleColumns = table.columns().visible();
+
+    visibleColumns[0] = false; // button
+
+    const fieldNames =
+        table.
+            columns().
+            header().
+            filter((_, index) => visibleColumns[index]).
+            map(header => header.innerText).
+            toArray();
+
+    const rows =
+        table.
+            rows({ search: "applied" }).
+            data().
+            map(row => row.filter((_, index) => visibleColumns[index])).
+            toArray();
+
+    vscode.postMessage({
+        command: 'openRaw',
+        fieldNames,
+        rows
+    });
+}
