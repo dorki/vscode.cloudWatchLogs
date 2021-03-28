@@ -1,3 +1,9 @@
+### version 0.3.6
+- update datatables package (security patch)
+- remove "empty" folder in query files
+- fix refresh bug in "open raw" in results page
+- avoid excessive querying while waiting for query results from cloudwatch
+
 ### version 0.3.5
 - add table export to the results window
 
