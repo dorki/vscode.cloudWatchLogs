@@ -8,6 +8,7 @@ import { parseQuery, Query } from './query';
 import { getEnvCredentials } from './authenticator';
 import * as clipboardy from 'clipboardy';
 import * as asTable from 'as-table';
+import { off } from 'process';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -139,6 +140,13 @@ export function activate(context: vscode.ExtensionContext) {
 		return panel;
 	}
 
+	function unorderedEquals(values: string[], otherValues: string[]) {
+		if (values.length !== otherValues.length) return false;
+		if (_.difference(values, otherValues).length !== 0) return false;
+		if (_.difference(otherValues, values).length !== 0) return false;
+		return true;
+	}
+
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env);
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region: query.region });
@@ -196,6 +204,8 @@ export function activate(context: vscode.ExtensionContext) {
 						getQueryResults({ queryId: startQueryResponse.queryId! }).
 						promise();
 
+				console.log(queryResultsResponse);
+
 				if (query.canceled) {
 					return;
 				}
@@ -205,13 +215,37 @@ export function activate(context: vscode.ExtensionContext) {
 				// dont refresh if there are no new results
 				if (query.queryResults == undefined ||
 					query.queryResults.length !== queryResultsResponse.results?.length) {
+
+					if (query.queryResults == undefined) {
+						currentPanel.webview.html =
+							BuildQueryResultsHtml(
+								context.extensionPath,
+								query,
+								logGroups,
+								queryResultsResponse.results!);
+
+						await new Promise(resolve => setTimeout(resolve, 100));
+					}
+
 					query.queryResults = queryResultsResponse.results;
-					currentPanel.webview.html =
-						BuildQueryResultsHtml(
-							context.extensionPath,
-							query,
-							logGroups,
-							queryResultsResponse.results!);
+
+					const fields =
+						_(queryResultsResponse.results).
+							flatMap(queryResult => queryResult.map(_ => _.field!)).
+							uniq().
+							without("@ptr").
+							value();
+
+					if (fields.length > 0) {
+						currentPanel.webview.postMessage({
+							command: 'results',
+							fieldNames: fields,
+							fieldRefresh: !unorderedEquals(fields, query.queryResultsFieldNames ?? []),
+							results: queryResultsResponse.results
+						});
+
+						query.queryResultsFieldNames = fields;
+					}
 				}
 
 				await new Promise(resolve => setTimeout(resolve, 1000));

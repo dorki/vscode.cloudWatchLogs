@@ -29,11 +29,11 @@
 }
   
 .shortCol {
-	max-width:1vw;
+	max-width: 1vw;
 }
 
 .longCol {
-	max-width:20vw;
+	max-width: 40vw;
 }
 
 .medCol {

@@ -1,13 +1,6 @@
 import parseDuration from 'parse-duration';
 import * as _ from 'lodash';
 
-const _defaultFields: Field[] = [{ name: "@timestamp" }, { name: "@message" }];
-
-type Field = {
-    name: string,
-    alias?: string
-}
-
 export type Query = {
     query: string,
     env: string,
@@ -17,6 +10,7 @@ export type Query = {
     raw: string,
     canceled?: boolean
     queryResults?: AWS.CloudWatchLogs.QueryResults
+    queryResultsFieldNames?: string[]
 }
 
 function parseTimes(durationStr: string) {

@@ -89,51 +89,8 @@ export function BuildQueryResultsHtml(
     logGroups: string[],
     queryResults: AWS.CloudWatchLogs.QueryResults) {
 
-    const fields =
-        _(queryResults).
-            flatMap(queryResult => queryResult.map(_ => _.field!)).
-            uniq().
-            without("@ptr").
-            value();
-
-    const fieldTypeToMatchFunction = {
-        "shortCol": (field: string) => !_.includes(field, "time") && !_.includes(field, "message") && !_.includes(field, "msg"),
-        "medCol": (field: string) => _.includes(field, "time"),
-        "longCol": (field: string) => _.includes(field, "message") || _.includes(field, "msg")
-    };
-
-    function getTh(value: string): string {
-        return `<th>${value}</th>`;
-    }
-
-    function getTd(value: string | undefined): string {
-        return `<td>${value?.trim() ?? ""}</td>`;
-    }
-
-    function buildQueryResultHtml(queryResult: AWS.CloudWatchLogs.ResultRows): string {
-        const fieldNameToValueMap =
-            new Map(
-                queryResult.map(
-                    queryResultField => [
-                        queryResultField.field,
-                        queryResultField.value]));
-        return (
-            `<tr>
-                <td><button onclick="goToLog('${fieldNameToValueMap.get("@ptr")}')" />🔍</td>
-                ${fields.map(fieldName => getTd(fieldNameToValueMap.get(fieldName)))}
-            </tr>`);
-    }
-
     function pathPartsToUri(...pathParts: string[]) {
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
-    }
-
-    function getColTypeIndexes(specialField: "shortCol" | "medCol" | "longCol") {
-        return _(fields).
-            map(field => field.toLowerCase()).
-            map((field, index) => fieldTypeToMatchFunction[specialField](field) ? index + 1 : undefined).
-            filter().
-            value();
     }
 
     return (`
@@ -147,7 +104,7 @@ export function BuildQueryResultsHtml(
             </head>
             <body>
                 <div style='padding:18px 0px'>
-                    <h1 style='display:inline'><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (${queryResults.length} results)</h1>
+                    <h1 style='display:inline'><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (<div style='display:inline' id='resultsCount'>0</div> results)</h1>
                     <a href onClick='openRaw()'>open raw json</a>
                 </div>
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
@@ -155,18 +112,13 @@ export function BuildQueryResultsHtml(
                 <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()">${query.raw}</pre>
                 <div class="tableContainer">
                     <div class='toggler'>
-                        Toggle columns:
-                        ${fields.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - ")}
+                        Toggle columns: <div style='display:inline' id='toggles' />
                     </div>
-                    <table id="resultsTable" class="display compact" style="width:100%">
+                    <table id='resultsTable' class='display compact' style='width:100%'>
                         <thead>
-                            <tr>
-                                <th></th>
-                                ${fields.map(getTh).join("")}
-                            </tr>
+                            <tr id="resultsTableHead"></tr>
                         </thead>
                         <tbody>
-                            ${queryResults.map(buildQueryResultHtml).join("")}
                         </tbody>
                     </table>
                 </div>
@@ -181,39 +133,7 @@ export function BuildQueryResultsHtml(
                             };
                         }()
                 </script>
-                <script>
-                    $(document).ready(function () {
-                        var table = $('#resultsTable').DataTable(
-                            {
-                                lengthMenu: [100, 500, 1000],
-                                ordering: true,
-                                order: [],
-                                paging: false,
-                                scrollY: '60vh',
-                                scrollCollapse: true,
-                                orderClasses: false,
-                                colReorder: true,
-                                columnDefs: [
-                                    { targets: [0], className: "btnCol", orderable: false },
-                                    { targets: [${getColTypeIndexes("shortCol").join(",")}], className: "shortCol" },
-                                    { targets: [${getColTypeIndexes("medCol").join(",")}], className: "medCol" },
-                                    { targets: [${getColTypeIndexes("longCol").join(",")}], className: "longCol" }
-                                ],
-                                createdRow: function (row) {
-                                    $(row).find("td, th").each(function(){
-                                        $(this).attr("title", this.innerText);
-                                     });
-                                }
-                            });
-
-                        $('a.toggle-vis').on( 'click', function (e) {
-                            e.preventDefault();
-                            var column = table.column( $(this).attr('data-column') );
-                            column.visible( ! column.visible() );
-                            $(this).css('text-decoration', column.visible() ? 'none' : 'underline')
-                        } );
-                    });
-                </script>
+                <script type="text/javascript" charset="utf8" src="${pathPartsToUri('src', 'script.js')}"></script>
                 <script>
                     $('.tableContainer')[0].childNodes.forEach(
                         childNode => {
