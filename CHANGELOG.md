@@ -1,14 +1,19 @@
+### version 0.4.0
+- change the way results are sent to display, improving performance and responsiveness
+- improve "open raw" in results, supporting table filter, columns visibilty and ordering
+- support setting the max results, it can now be set to more then 1000 (see in the README)
+
 ### version 0.3.6
 - update datatables package (security patch)
 - remove "empty" folder in query files
-- fix refresh bug in "open raw" in results page
 - avoid excessive querying while waiting for query results from cloudwatch
+- fix - refresh bug in "open raw" in results page
 
 ### version 0.3.5
 - add table export to the results window
 
 ### version 0.3.4
-- fix query time range parsing
+- fix - query time range parsing
 
 ### version 0.3.3
 - support time range

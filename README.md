@@ -6,7 +6,7 @@ Removes the hussle of switching accounts when queries differante environments lo
 ### syntax
 each query should looks like the following:
 ```
-env:region:log-group-name:duration
+env;region;log-group-name;duration[;max-results]
 fields @timestamp, Level, MessageTemplate
 | sort @timestamp desc
 | limit 10
@@ -16,6 +16,9 @@ fields @timestamp, Level, MessageTemplate
 - `region`: the [region][3] to run query in, eg. 'us-east-1' (without the quotes)
 - `log-group-name`: the [log group][2] to query, you can specify multiple names with "," as seperator or using wildcards ("*")
 - `duration`: the time range in duration human readable syntax, eg. 1h, 30m, 2d etc.. Its also support explicit time range with "->". For example, 2020-09-03T01:40+00:00->2020-09-03T01:50+00:00 (omit the +00 to use local time)
+- `max-results`: optional, the maximum results to fatch from the server (defaults to 1000)
+
+<span style="background-color:maroon">Since version 0.4 the setting seperator chnaged from ':' to ';'</span>
 
 ### usage
 just make sure your curser is somewhere inside a query and press `ctrl`+`enter` or run vscode command `Execute CloudWatchlogs query`
