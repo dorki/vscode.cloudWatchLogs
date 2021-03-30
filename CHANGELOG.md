@@ -1,3 +1,7 @@
+### version 0.4.1
+- refresh results tab title while query is running
+- fix - query cancellation
+
 ### version 0.4.0
 - change the way results are sent to display, improving performance and responsiveness
 - improve "open raw" in results, supporting table filter, columns visibilty and ordering

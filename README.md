@@ -18,7 +18,9 @@ fields @timestamp, Level, MessageTemplate
 - `duration`: the time range in duration human readable syntax, eg. 1h, 30m, 2d etc.. Its also support explicit time range with "->". For example, 2020-09-03T01:40+00:00->2020-09-03T01:50+00:00 (omit the +00 to use local time)
 - `max-results`: optional, the maximum results to fatch from the server (defaults to 1000)
 
-<span style="background-color:maroon">Since version 0.4 the setting seperator chnaged from ':' to ';'</span>
+~~~
+Since version 0.4 the setting seperator chnaged from ':' to ';'
+~~~
 
 ### usage
 just make sure your curser is somewhere inside a query and press `ctrl`+`enter` or run vscode command `Execute CloudWatchlogs query`
