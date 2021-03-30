@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const panel =
 			vscode.window.createWebviewPanel(
 				`Query${Date.now()}`,
-				`Results ${query.env} ${query.logGroup}`,
+				`Results ${query.env} (0)`,
 				{
 					viewColumn: vscode.ViewColumn.Active,
 					preserveFocus: true
@@ -182,7 +182,7 @@ export function activate(context: vscode.ExtensionContext) {
 			location: vscode.ProgressLocation.Notification,
 			cancellable: true,
 			title: 'Loading...'
-		}, async (progress) => {
+		}, async (progress, token) => {
 
 			progress.report({ increment: 0 });
 
@@ -192,9 +192,8 @@ export function activate(context: vscode.ExtensionContext) {
 						getQueryResults({ queryId: startQueryResponse.queryId! }).
 						promise();
 
-				console.log(queryResultsResponse);
-
-				if (query.canceled) {
+				if (query.canceled || token.isCancellationRequested) {
+					currentPanel.title = `Results ${query.env} (cancelled)`;
 					return;
 				}
 
@@ -203,6 +202,8 @@ export function activate(context: vscode.ExtensionContext) {
 				// dont refresh if there are no new results
 				if (query.queryResults == undefined ||
 					query.queryResults.length !== queryResultsResponse.results?.length) {
+
+					currentPanel.title = `Results ${query.env} (${queryResultsResponse.results?.length})`;
 
 					if (query.queryResults == undefined) {
 						currentPanel.webview.html =
@@ -238,7 +239,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				await new Promise(resolve => setTimeout(resolve, 1000));
 			}
-			while (queryResultsResponse.status !== "Complete" && !query.canceled);
+			while (queryResultsResponse.status !== "Complete" && !query.canceled && !token.isCancellationRequested);
 
 			progress.report({ increment: 100 });
 		});

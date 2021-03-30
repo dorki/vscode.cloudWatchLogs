@@ -13,8 +13,6 @@ function getColTypeIndexes(fieldNames, specialField) {
 
 function handleFields(fieldNames) {
 
-    console.log(fieldNames);
-
     $("#toggles").
         empty().
         append(fieldNames.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - "))
@@ -87,10 +85,8 @@ $(document).ready(function () {
         const message = event.data;
         switch (message.command) {
             case 'results':
-                console.log(message);
 
                 if (message.fieldRefresh) {
-                    console.log("refresh");
                     handleFields(message.fieldNames);
                 }
 
