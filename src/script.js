@@ -108,6 +108,11 @@ const refreshOnCtrlEnter = () => {
         refresh()
     }
 }
+const formatPastedText = () => {
+    event.preventDefault()
+    const text = event.clipboardData.getData("text/plain");
+    document.execCommand('insertText', false, text)
+}
 const openRaw = () => {
 
     const table = $('#resultsTable').DataTable();

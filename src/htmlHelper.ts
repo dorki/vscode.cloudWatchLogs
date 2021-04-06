@@ -109,7 +109,7 @@ export function BuildQueryResultsHtml(
                 </div>
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
-                <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()">${query.raw}</pre>
+                <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()" onpaste="formatPastedText()">${query.raw}</pre>
                 <div class="tableContainer">
                     <div class='toggler'>
                         Toggle columns: <div style='display:inline' id='toggles' />
