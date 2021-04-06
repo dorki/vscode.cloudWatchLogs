@@ -39,7 +39,7 @@ export function parseQuery(text: string): Query {
             region,
             logGroup,
             times: parseTimes(durations),
-            maxResults: parseInt(maxResults ?? 1000),
+            maxResults: parseInt(maxResults),
             raw: text
         };
     }
@@ -53,7 +53,7 @@ export function parseQuery(text: string): Query {
         region,
         logGroup,
         times,
-        maxResults: 1000,
+        maxResults: NaN,
         raw: text
     };
 }
