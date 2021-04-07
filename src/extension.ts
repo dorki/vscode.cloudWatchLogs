@@ -112,6 +112,13 @@ export function activate(context: vscode.ExtensionContext) {
 						query = parseQuery(message.query)
 						await executeQuery(query, panel);
 						return;
+					case 'duplicate':
+						const duplicatedPanel = createQueryWebViewPanel(query);
+						duplicatedPanel.webview.html =
+							BuildQueryResultsHtml(
+								context.extensionPath,
+								query,
+								[]);
 				}
 			},
 			undefined,
@@ -210,8 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
 							BuildQueryResultsHtml(
 								context.extensionPath,
 								query,
-								logGroups,
-								queryResultsResponse.results!);
+								logGroups);
 
 						await new Promise(resolve => setTimeout(resolve, 100));
 					}

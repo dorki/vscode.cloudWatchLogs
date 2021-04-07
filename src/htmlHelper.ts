@@ -86,8 +86,7 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
 export function BuildQueryResultsHtml(
     extensionPath: string,
     query: Query,
-    logGroups: string[],
-    queryResults: AWS.CloudWatchLogs.QueryResults) {
+    logGroups: string[]) {
 
     function pathPartsToUri(...pathParts: string[]) {
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
@@ -105,7 +104,7 @@ export function BuildQueryResultsHtml(
             <body>
                 <div style='padding:18px 0px'>
                     <h1 style='display:inline'><button class='refreshButton' onclick="refresh()">Refresh</button> Query results (<div style='display:inline' id='resultsCount'>0</div> results)</h1>
-                    <a href onClick='openRaw()'>open raw json</a>
+                    <a href onClick='openRaw()'>open raw table</a> - <a href onClick='duplicate()'>duplicate tab</a>
                 </div>
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>

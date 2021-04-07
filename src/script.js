@@ -113,6 +113,11 @@ const formatPastedText = () => {
     const text = event.clipboardData.getData("text/plain");
     document.execCommand('insertText', false, text)
 }
+const duplicate = () => {
+    vscode.postMessage({
+        command: 'duplicate'
+    });
+}
 const openRaw = () => {
 
     const table = $('#resultsTable').DataTable();
