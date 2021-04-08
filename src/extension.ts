@@ -181,8 +181,6 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		let queryResultsResponse: AWS.CloudWatchLogs.GetQueryResultsResponse;
-
 		const currentPanel = panel ?? createQueryWebViewPanel(query);
 
 		await vscode.window.withProgress({
@@ -192,6 +190,15 @@ export function activate(context: vscode.ExtensionContext) {
 		}, async (progress, token) => {
 
 			progress.report({ increment: 0 });
+
+			// build results page
+			currentPanel.webview.html =
+				BuildQueryResultsHtml(
+					context.extensionPath,
+					query,
+					logGroups);
+
+			let queryResultsResponse: AWS.CloudWatchLogs.GetQueryResultsResponse;
 
 			do {
 				queryResultsResponse =
@@ -207,22 +214,10 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 40 });
 
 				// dont refresh if there are no new results
-				if (query.queryResults == undefined ||
-					query.queryResults.length !== queryResultsResponse.results?.length) {
+				if (queryResultsResponse.results != undefined &&
+					queryResultsResponse.results.length > (query.queryResults?.length ?? 0)) {
 
 					currentPanel.title = `Results ${query.env} (${queryResultsResponse.results?.length})`;
-
-					if (query.queryResults == undefined) {
-						currentPanel.webview.html =
-							BuildQueryResultsHtml(
-								context.extensionPath,
-								query,
-								logGroups);
-
-						await new Promise(resolve => setTimeout(resolve, 100));
-					}
-
-					query.queryResults = queryResultsResponse.results;
 
 					const fields =
 						_(queryResultsResponse.results).
@@ -239,6 +234,7 @@ export function activate(context: vscode.ExtensionContext) {
 							results: queryResultsResponse.results
 						});
 
+						query.queryResults = queryResultsResponse.results;
 						query.queryResultsFieldNames = fields;
 					}
 				}
