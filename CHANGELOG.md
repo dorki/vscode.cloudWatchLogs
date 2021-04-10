@@ -1,3 +1,9 @@
+### version 0.4.2
+- paste plain text only in the query editor (in results view)
+- add "duplicate" button to results view
+- fix - "limit" keyword didnt work
+- fix - rendering results
+
 ### version 0.4.1
 - refresh results tab title while query is running
 - fix - query cancellation
