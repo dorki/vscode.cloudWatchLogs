@@ -1,3 +1,6 @@
+### version 0.4.3
+- new command: GetHistory. Opens new tab with recent query history
+
 ### version 0.4.2
 - paste plain text only in the query editor (in results view)
 - add "duplicate" button to results view
