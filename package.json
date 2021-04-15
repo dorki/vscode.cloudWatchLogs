@@ -14,6 +14,7 @@
 	],
 	"activationEvents": [
 		"onCommand:extension.runQuery",
+		"onCommand:extension.getHistory",
 		"onView:query-files"
 	],
 	"main": "./out/extension.js",
@@ -22,6 +23,10 @@
 			{
 				"command": "extension.runQuery",
 				"title": "Execute CloudWatchLogs query"
+			},
+			{
+				"command": "extension.getHistory",
+				"title": "Get CloudWatchLogs queries history"
 			},
 			{
 				"command": "extension.openQueryFileNewColumn",
@@ -86,7 +91,10 @@
 			"editor/context": [
 				{
 					"command": "extension.runQuery",
-					"alt": "markdown.showPreviewToSide",
+					"group": "navigation"
+				},
+				{
+					"command": "extension.getHistory",
 					"group": "navigation"
 				}
 			],

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as _ from 'lodash';
 import { Query } from './query';
 
-function formatTime(timeMs: string | number) {
+export function formatTime(timeMs: string | number) {
     return new Date(Number(timeMs)).toLocaleString(undefined, { hour12: false });
 }
 

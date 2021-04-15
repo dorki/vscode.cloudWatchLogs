@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
 import * as AWS from 'aws-sdk';
 import * as _ from 'lodash';
-import { BuildQueryResultsHtml, BuildLogRecordHtml } from './htmlHelper';
+import { BuildQueryResultsHtml, BuildLogRecordHtml, formatTime } from './htmlHelper';
 import { Initialize as InitializeQueryFiles } from './queryFiles'
 import { getFocusedTextSection } from './windowUtils';
 import { parseQuery, Query } from './query';
 import { getEnvCredentials } from './authenticator';
 import * as clipboardy from 'clipboardy';
 import * as asTable from 'as-table';
-import { off } from 'process';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -247,11 +246,73 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+	async function getHistory(query: Query) {
+
+		const env =
+			!_.isEmpty(query.env)
+				? query.env
+				: await vscode.window.showInputBox({ placeHolder: 'Enter environment name' });
+		if (env == undefined) {
+			return;
+		}
+
+		const region =
+			!_.isEmpty(query.region)
+				? query.region
+				: await vscode.window.showInputBox({ placeHolder: 'Enter region' });
+		if (region == undefined) {
+			return;
+		}
+
+		const creds = await getEnvCredentials(env);
+		const logs = new AWS.CloudWatchLogs({ credentials: creds, region });
+		const describeQueriesResponse = await logs.describeQueries().promise();
+
+		var queries =
+			_(describeQueriesResponse.queries).
+				map(
+					query => {
+						return {
+							createTime: query.createTime,
+							queryString: query.queryString?.substr(query.queryString?.indexOf("|") + 2)
+						}
+					}).
+				groupBy(query => query.queryString).
+				map(
+					(queries, queryString) => {
+						return {
+							queryString,
+							createTime: _(queries).map(query => query.createTime).max()!
+						}
+					}).
+				orderBy(_ => _.createTime, "desc").
+				value();
+
+		let content = `Query History (${queries.length})\n\n`;
+		for (const query of queries) {
+			content += formatTime(query.createTime) + "\n";
+			content += query.queryString.trim() + "\n";
+			content += "\n";
+		}
+
+		await vscode.window.showTextDocument(
+			await vscode.workspace.openTextDocument({ content }),
+			vscode.ViewColumn.Active);
+	}
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			'extension.runQuery',
 			async () => {
 				const query = parseQuery(getFocusedTextSection());
 				await executeQuery(query);
+			}));
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			'extension.getHistory',
+			async () => {
+				const query = parseQuery(getFocusedTextSection());
+				await getHistory(query);
 			}));
 }
