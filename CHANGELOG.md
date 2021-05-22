@@ -1,3 +1,7 @@
+### version 0.4.4
+- fix - rendering column was bas when new fields added during results fetching
+- fix - column toggles ui
+
 ### version 0.4.3
 - new command: GetHistory. Opens new tab with recent query history
 
