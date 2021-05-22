@@ -13,16 +13,16 @@ function getColTypeIndexes(fieldNames, specialField) {
 
 function handleFields(fieldNames) {
 
-    $("#toggles").
+    $('.tableContainer').
         empty().
+        append(tableContainerInnerHtml);
+
+    $("#toggles").
         append(fieldNames.map((fieldName, index) => `<a class="toggle-vis" data-column="${index + 1}">${fieldName}</a>`).join(" - "))
 
     $("#resultsTableHead").
-        empty().
         append("<th></th>").
         append(fieldNames.map(fieldName => `<th>${fieldName}</th>`).join());
-
-    $('#resultsTable').DataTable().clear().destroy();
 
     const table =
         $('#resultsTable').DataTable(

@@ -1,13 +1,13 @@
-import * as vscode from 'vscode';
-import * as AWS from 'aws-sdk';
-import * as _ from 'lodash';
-import { BuildQueryResultsHtml, BuildLogRecordHtml, formatTime } from './htmlHelper';
-import { Initialize as InitializeQueryFiles } from './queryFiles'
-import { getFocusedTextSection } from './windowUtils';
-import { parseQuery, Query } from './query';
-import { getEnvCredentials } from './authenticator';
-import * as clipboardy from 'clipboardy';
 import * as asTable from 'as-table';
+import * as AWS from 'aws-sdk';
+import * as clipboardy from 'clipboardy';
+import * as _ from 'lodash';
+import * as vscode from 'vscode';
+import { getEnvCredentials } from './authenticator';
+import { BuildLogRecordHtml, BuildQueryResultsHtml, formatTime } from './htmlHelper';
+import { parseQuery, Query } from './query';
+import { Initialize as InitializeQueryFiles } from './queryFiles';
+import { getFocusedTextSection } from './windowUtils';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -226,15 +226,19 @@ export function activate(context: vscode.ExtensionContext) {
 							value();
 
 					if (fields.length > 0) {
+						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? [])
+						if (newFieldExists) {
+							query.queryResultsFieldNames = fields;
+						}
+
 						currentPanel.webview.postMessage({
 							command: 'results',
-							fieldNames: fields,
-							fieldRefresh: !unorderedEquals(fields, query.queryResultsFieldNames ?? []),
+							fieldNames: query.queryResultsFieldNames,
+							fieldRefresh: newFieldExists,
 							results: queryResultsResponse.results
 						});
 
 						query.queryResults = queryResultsResponse.results;
-						query.queryResultsFieldNames = fields;
 					}
 				}
 

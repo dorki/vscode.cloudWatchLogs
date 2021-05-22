@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk';
-import * as vscode from 'vscode';
-import * as path from 'path';
 import * as _ from 'lodash';
+import * as path from 'path';
+import * as vscode from 'vscode';
 import { Query } from './query';
 
 export function formatTime(timeMs: string | number) {
@@ -92,6 +92,13 @@ export function BuildQueryResultsHtml(
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
     }
 
+    const tableContainerInnerHtml = `
+        <div class='toggler'>Toggle columns: <div id='toggles' style='display:inline'></div></div>
+        <table id='resultsTable' class='display compact' style='width:100%'>
+            <thead><tr id='resultsTableHead'></tr></thead>
+            <tbody></tbody>
+        </table>`;
+
     return (`
         <!DOCTYPE html>
         <html>
@@ -109,18 +116,8 @@ export function BuildQueryResultsHtml(
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
                 <h4>Log groups: ${logGroups.join(", ")}</h4>
                 <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()" onpaste="formatPastedText()">${query.raw}</pre>
-                <div class="tableContainer">
-                    <div class='toggler'>
-                        Toggle columns: <div style='display:inline' id='toggles' />
-                    </div>
-                    <table id='resultsTable' class='display compact' style='width:100%'>
-                        <thead>
-                            <tr id="resultsTableHead"></tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="tableContainer"> ${tableContainerInnerHtml} </div>
+                <script>var tableContainerInnerHtml=\"${tableContainerInnerHtml.replace(/\s+/g, ' ').trim()}\"</script>
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('src', 'script.js')}"></script>
             </body>
         </html>
