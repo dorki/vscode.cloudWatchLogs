@@ -90,6 +90,7 @@ tbody tr:nth-child(even) td {
 
 .toggler a {
 	cursor: pointer;
+	text-decoration: underline;
 }
 
 pre {

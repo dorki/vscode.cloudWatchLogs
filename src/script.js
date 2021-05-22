@@ -53,7 +53,7 @@ function handleFields(fieldNames) {
         e.preventDefault();
         var column = table.column($(this).attr('data-column'));
         column.visible(!column.visible());
-        $(this).css('text-decoration', column.visible() ? 'none' : 'underline')
+        $(this).css('text-decoration', column.visible() ? 'underline' : 'none')
     });
 }
 
