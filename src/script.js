@@ -118,6 +118,11 @@ const duplicate = () => {
         command: 'duplicate'
     });
 }
+const changeTitle = () => {
+    vscode.postMessage({
+        command: 'changeTitle'
+    });
+}
 const openRaw = () => {
 
     const table = $('#resultsTable').DataTable();

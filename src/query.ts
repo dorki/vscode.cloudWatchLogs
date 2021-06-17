@@ -1,9 +1,10 @@
-import parseDuration from 'parse-duration';
 import * as _ from 'lodash';
+import parseDuration from 'parse-duration';
 
 export type Query = {
     query: string,
     env: string,
+    title?: string,
     region: string,
     logGroup: string,
     times: { start: number, end: number },
@@ -24,7 +25,7 @@ function parseTimes(durationStr: string) {
 }
 
 
-export function parseQuery(text: string): Query {
+export function parseQuery(text: string, existing?: Query): Query {
     const [settings, ...queryLines] =
         _.filter(
             text.trim().split("\n"),
@@ -54,6 +55,7 @@ export function parseQuery(text: string): Query {
         logGroup,
         times,
         maxResults: NaN,
-        raw: text
+        raw: text,
+        title: existing?.title
     };
 }

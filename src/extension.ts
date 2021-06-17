@@ -108,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 							}),
 							vscode.ViewColumn.Active);
 					case 'refresh':
-						query = parseQuery(message.query)
+						query = parseQuery(message.query, query)
 						await executeQuery(query, panel);
 						return;
 					case 'duplicate':
@@ -118,6 +118,25 @@ export function activate(context: vscode.ExtensionContext) {
 								context.extensionPath,
 								query,
 								[]);
+					case 'changeTitle':
+						const title =
+							await vscode.window.showInputBox({
+								placeHolder: 'Set title text',
+								prompt: 'Tab Title',
+								value: query.title
+							});
+
+						if (title == undefined) {
+							return;
+						}
+						else if (query.title) {
+							panel.title = panel.title.replace(query.title, title);
+						}
+						else {
+							panel.title = panel.title.replace("Results", title);
+						}
+
+						query.title = title;
 				}
 			},
 			undefined,
@@ -190,6 +209,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 			progress.report({ increment: 0 });
 
+			currentPanel.iconPath = getPanelIconPath("hourglass");
+
 			// build results page
 			currentPanel.webview.html =
 				BuildQueryResultsHtml(
@@ -206,8 +227,7 @@ export function activate(context: vscode.ExtensionContext) {
 						promise();
 
 				if (query.canceled || token.isCancellationRequested) {
-					currentPanel.title = `Results ${query.env} (cancelled)`;
-					return;
+					break;
 				}
 
 				progress.report({ increment: 40 });
@@ -216,7 +236,7 @@ export function activate(context: vscode.ExtensionContext) {
 				if (queryResultsResponse.results != undefined &&
 					queryResultsResponse.results.length > (query.queryResults?.length ?? 0)) {
 
-					currentPanel.title = `Results ${query.env} (${queryResultsResponse.results?.length})`;
+					currentPanel.title = getPanelTitle(query, queryResultsResponse.results?.length);
 
 					const fields =
 						_(queryResultsResponse.results).
@@ -246,8 +266,21 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			while (queryResultsResponse.status !== "Complete" && !query.canceled && !token.isCancellationRequested);
 
-			progress.report({ increment: 100 });
+			currentPanel.title = getPanelTitle(query, queryResultsResponse.results?.length);
+			currentPanel.iconPath =
+				getPanelIconPath(
+					query.canceled || token.isCancellationRequested
+						? "error"
+						: "done")
 		});
+	}
+
+	function getPanelIconPath(status: string) {
+		return vscode.Uri.joinPath(context.extensionUri, "media/panel", `${status}.svg`);
+	}
+
+	function getPanelTitle(query: Query, results?: number) {
+		return `${query.title ?? 'Results'} ${query.env} (${results ?? 0})`;
 	}
 
 	async function getHistory(query: Query) {
