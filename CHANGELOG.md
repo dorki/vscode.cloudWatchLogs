@@ -1,3 +1,7 @@
+### version 0.4.5
+- support custom tab title
+- tab icon now indicate query status (completed, working, faulted/cancelled)
+
 ### version 0.4.4
 - fix - rendering column was bas when new fields added during results fetching
 - fix - column toggles ui
