@@ -173,7 +173,7 @@
 		"datatables.net": "^1.10.22",
 		"datatables.net-dt": "^1.10.22",
 		"jquery": "^3.5.1",
-		"lodash": "^4.17.19",
+		"lodash": "^4.17.21",
 		"parse-duration": "^0.4.4"
 	}
 }
