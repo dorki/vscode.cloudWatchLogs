@@ -107,6 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
 								language: "json"
 							}),
 							vscode.ViewColumn.Active);
+						return;
 					case 'refresh':
 						query = parseQuery(message.query, query)
 						await executeQuery(query, panel);
@@ -118,6 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
 								context.extensionPath,
 								query,
 								[]);
+						return;
 					case 'changeTitle':
 						const title =
 							await vscode.window.showInputBox({
@@ -137,6 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 
 						query.title = title;
+						return;
 				}
 			},
 			undefined,
