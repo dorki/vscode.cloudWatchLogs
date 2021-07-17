@@ -235,9 +235,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 40 });
 
-				// dont refresh if there are no new results
-				if (queryResultsResponse.results != undefined &&
-					queryResultsResponse.results.length > (query.queryResults?.length ?? 0)) {
+				if (queryResultsResponse.results != undefined) {
 
 					currentPanel.title = getPanelTitle(query, queryResultsResponse.results?.length);
 
