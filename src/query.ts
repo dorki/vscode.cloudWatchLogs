@@ -5,14 +5,21 @@ export type Query = {
     query: string,
     env: string,
     title?: string,
-    region: string,
+    regions: string[],
     logGroup: string,
     times: { start: number, end: number },
     maxResults: number,
     raw: string,
     canceled?: boolean
-    queryResults?: AWS.CloudWatchLogs.QueryResults
     queryResultsFieldNames?: string[]
+}
+
+function parseRegions(regions: string) {
+    return _(regions).
+        split(",").
+        map(region => region.trim()).
+        uniq().
+        value();
 }
 
 function parseTimes(durationStr: string) {
@@ -24,7 +31,6 @@ function parseTimes(durationStr: string) {
     };
 }
 
-
 export function parseQuery(text: string, existing?: Query): Query {
     const [settings, ...queryLines] =
         _.filter(
@@ -33,11 +39,11 @@ export function parseQuery(text: string, existing?: Query): Query {
     const query = queryLines.join("\n");
 
     if (settings.includes(";")) {
-        const [env, region, logGroup, durations, maxResults] = settings.split(";");
+        const [env, regions, logGroup, durations, maxResults] = settings.split(";");
         return {
             query,
             env,
-            region,
+            regions: parseRegions(regions),
             logGroup,
             times: parseTimes(durations),
             maxResults: parseInt(maxResults),
@@ -45,15 +51,13 @@ export function parseQuery(text: string, existing?: Query): Query {
         };
     }
 
-    const [env, region, logGroup, ...durationStr] = settings.split(":");
-    const times = parseTimes(durationStr.join(":"));
-
+    const [env, regions, logGroup, ...durationStr] = settings.split(":");
     return {
         query,
         env,
-        region,
+        regions: parseRegions(regions),
         logGroup,
-        times,
+        times: parseTimes(durationStr.join(":")),
         maxResults: NaN,
         raw: text,
         title: existing?.title

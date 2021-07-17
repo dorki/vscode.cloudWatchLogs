@@ -57,22 +57,37 @@ function handleFields(fieldNames) {
     });
 }
 
-function handleResults(fieldNames, queryResults) {
+function handleResults(fieldNames, regionToQueryResultsMap) {
 
-    $('#resultsCount').text(queryResults.length);
+    const timeFieldName = fieldNames.find(fieldName => fieldName.toLowerCase().includes("time"));
+    let timeAndRegionAndFieldNameToValue = [];
+    for ([region, queryResults] of Object.entries(regionToQueryResultsMap)) {
+        for (queryResult of queryResults.results) {
+            const fieldNameToValueMap =
+                new Map(
+                    queryResult.map(
+                        queryResultField => [
+                            queryResultField.field,
+                            queryResultField.value]));
+
+            timeAndRegionAndFieldNameToValue.push([fieldNameToValueMap.get(timeFieldName), region, fieldNameToValueMap]);
+        }
+    }
+
+    if (Object.keys(regionToQueryResultsMap).length > 1 &&
+        timeFieldName != undefined) {
+        timeAndRegionAndFieldNameToValue =
+            timeAndRegionAndFieldNameToValue.sort(([time], [otherTime]) => new Date(otherTime) - new Date(time));
+    }
+
+    $('#resultsCount').text(timeAndRegionAndFieldNameToValue.length);
 
     const table = $('#resultsTable').DataTable().clear();
 
-    for (queryResult of queryResults) {
-        const fieldNameToValueMap =
-            new Map(
-                queryResult.map(
-                    queryResultField => [
-                        queryResultField.field,
-                        queryResultField.value]));
+    for ([_, region, fieldNameToValueMap] of timeAndRegionAndFieldNameToValue) {
 
         table.row.add([
-            `<button onclick="goToLog(\'${fieldNameToValueMap.get("@ptr")}\')">🔍</button>`,
+            `<button onclick="goToLog(\'${fieldNameToValueMap.get("@ptr")}\', \'${region}\')">🔍</button>`,
             ...fieldNames.map(fieldName => fieldNameToValueMap.get(fieldName))
         ]);
     }
@@ -85,14 +100,13 @@ $(document).ready(function () {
         const message = event.data;
         switch (message.command) {
             case 'results':
-
                 if (message.fieldRefresh) {
                     handleFields(message.fieldNames);
                 }
 
                 handleResults(
                     message.fieldNames,
-                    message.results);
+                    message.regionToQueryResultsMap);
 
                 break;
         }
@@ -101,7 +115,7 @@ $(document).ready(function () {
 
 // consts function for page events
 const vscode = acquireVsCodeApi();
-const goToLog = recordPtr => vscode.postMessage({ command: 'goToLog', text: recordPtr });
+const goToLog = (recordPtr, region) => vscode.postMessage({ command: 'goToLog', text: recordPtr, region });
 const refresh = () => vscode.postMessage({ command: 'refresh', query: $("#rawQuery")[0].textContent });
 const refreshOnCtrlEnter = () => {
     if (event.key === 'Enter' && event.ctrlKey) {

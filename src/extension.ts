@@ -98,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 			async message => {
 				switch (message.command) {
 					case 'goToLog':
-						await GoToLog(message.text, query.env, query.region);
+						await GoToLog(message.text, query.env, message.region);
 						return;
 					case 'openRaw':
 						await vscode.window.showTextDocument(
@@ -164,14 +164,19 @@ export function activate(context: vscode.ExtensionContext) {
 
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env);
-		const logs = new AWS.CloudWatchLogs({ credentials: creds, region: query.region });
+
+		const regionToLogsClientMap =
+			_(query.regions).
+				keyBy().
+				mapValues(region => new AWS.CloudWatchLogs({ credentials: creds, region })).
+				value()
 
 		let logGroups = query.logGroup.split(',');
 
-		if (query.logGroup.includes('*')) {
-			const describeLogGroupsResponse = await logs.describeLogGroups().promise();
-
-			logGroups =
+		const regionToLogGroupsMap: { [region: string]: string[] } = {};
+		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
+			const describeLogGroupsResponse = await logsClient.describeLogGroups().promise();
+			regionToLogGroupsMap[region] =
 				_(logGroups).
 					map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
 					flatMap(
@@ -184,22 +189,26 @@ export function activate(context: vscode.ExtensionContext) {
 					value();
 		}
 
-		let startQueryResponse: AWS.CloudWatchLogs.StartQueryResponse;
-		try {
-			startQueryResponse =
-				await logs.
-					startQuery({
-						startTime: query.times.start / 1000,
-						endTime: query.times.end / 1000,
-						queryString: query.query,
-						logGroupNames: logGroups,
-						limit: query.maxResults
-					}).
-					promise();
-		}
-		catch (error) {
-			vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
-			return;
+		const regionToStartQueryIdMap: { [x: string]: string } = {};
+		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
+			try {
+				const startQueryResponse =
+					await logsClient.
+						startQuery({
+							startTime: query.times.start / 1000,
+							endTime: query.times.end / 1000,
+							queryString: query.query,
+							logGroupNames: regionToLogGroupsMap[region],
+							limit: query.maxResults
+						}).
+						promise();
+
+				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
+			}
+			catch (error) {
+				vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
+				return;
+			}
 		}
 
 		const currentPanel = panel ?? createQueryWebViewPanel(query);
@@ -221,13 +230,17 @@ export function activate(context: vscode.ExtensionContext) {
 					query,
 					logGroups);
 
-			let queryResultsResponse: AWS.CloudWatchLogs.GetQueryResultsResponse;
-
+			let results: AWS.CloudWatchLogs.ResultRows[] = [];
+			const regionToQueryResultsMap: { [x: string]: AWS.CloudWatchLogs.GetQueryResultsResponse } = {};
 			do {
-				queryResultsResponse =
-					await logs.
-						getQueryResults({ queryId: startQueryResponse.queryId! }).
-						promise();
+				for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
+					if (regionToQueryResultsMap[region]?.status !== "Complete") {
+						regionToQueryResultsMap[region] =
+							await logsClient.
+								getQueryResults({ queryId: regionToStartQueryIdMap[region] }).
+								promise();
+					}
+				}
 
 				if (query.canceled || token.isCancellationRequested) {
 					break;
@@ -235,12 +248,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 40 });
 
-				if (queryResultsResponse.results != undefined) {
+				if (_.some(regionToQueryResultsMap, queryResultsResponse => queryResultsResponse.results != undefined)) {
 
-					currentPanel.title = getPanelTitle(query, queryResultsResponse.results?.length);
+					results =
+						_.flatMap(
+							regionToQueryResultsMap,
+							queryResultsResponse => queryResultsResponse.results ?? [])
+
+					currentPanel.title = getPanelTitle(query, results.length);
 
 					const fields =
-						_(queryResultsResponse.results).
+						_(results).
 							flatMap(queryResult => queryResult.map(_ => _.field!)).
 							uniq().
 							without("@ptr").
@@ -256,18 +274,21 @@ export function activate(context: vscode.ExtensionContext) {
 							command: 'results',
 							fieldNames: query.queryResultsFieldNames,
 							fieldRefresh: newFieldExists,
-							results: queryResultsResponse.results
+							regionToQueryResultsMap: regionToQueryResultsMap
 						});
-
-						query.queryResults = queryResultsResponse.results;
 					}
 				}
 
 				await new Promise(resolve => setTimeout(resolve, 1000));
 			}
-			while (queryResultsResponse.status !== "Complete" && !query.canceled && !token.isCancellationRequested);
+			while (
+				_.some(
+					regionToQueryResultsMap,
+					queryResultsResponse => queryResultsResponse.status !== "Complete") &&
+				!query.canceled &&
+				!token.isCancellationRequested);
 
-			currentPanel.title = getPanelTitle(query, queryResultsResponse.results?.length);
+			currentPanel.title = getPanelTitle(query, results.length);
 			currentPanel.iconPath =
 				getPanelIconPath(
 					query.canceled || token.isCancellationRequested
@@ -280,8 +301,8 @@ export function activate(context: vscode.ExtensionContext) {
 		return vscode.Uri.joinPath(context.extensionUri, "media/panel", `${status}.svg`);
 	}
 
-	function getPanelTitle(query: Query, results?: number) {
-		return `${query.title ?? 'Results'} ${query.env} (${results ?? 0})`;
+	function getPanelTitle(query: Query, results: number) {
+		return `${query.title ?? 'Results'} ${query.env} (${results})`;
 	}
 
 	async function getHistory(query: Query) {
@@ -295,8 +316,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		const region =
-			!_.isEmpty(query.region)
-				? query.region
+			!_.isEmpty(query.regions)
+				? query.regions[0]
 				: await vscode.window.showInputBox({ placeHolder: 'Enter region' });
 		if (region == undefined) {
 			return;
