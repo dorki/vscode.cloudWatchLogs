@@ -1,3 +1,6 @@
+### version 0.5.1
+- support predefind tab title (use #@TITLE as any line in the query text)
+
 ### version 0.5.0
 - support multiple regions at once (comma sepeated)
 - fix - 'duplicate' button triggered the "set title" button
