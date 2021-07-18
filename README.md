@@ -3,7 +3,7 @@
 Allows running cloudwatch insight queries from within vscode.
 Removes the hussle of switching accounts when queries differante environments logs.
 
-### syntax
+### Syntax
 each query should looks like the following:
 ```
 env;regions;log-group-name;duration[;max-results]
@@ -16,13 +16,19 @@ fields @timestamp, Level, MessageTemplate
 - `regions`: the [regions][3] to run the query in (comma seperated). eg. 'us-east-1' or 'us-east-1,use-east-2' (without the quotes). 
 - `log-group-name`: the [log group][2] to query, you can specify multiple names with "," as seperator or using wildcards ("*")
 - `duration`: the time range in duration human readable syntax, eg. 1h, 30m, 2d etc.. Its also support explicit time range with "->". For example, 2020-09-03T01:40+00:00->2020-09-03T01:50+00:00 (omit the +00 to use local time)
-- `max-results`: optional, the maximum results to fatch from the server (defaults to 1000)
+- `max-results`: optional, the maximum results to fatch from the server (defaults to 1000, requires the setting seperator to be ';')
 
 ~~~
 Since version 0.4 the setting seperator chnaged from ':' to ';' (to support the optional 'max-results')
 ~~~
 
-### usage
+~~~
+'#' at the beginning of the line mark the line as ignored
+'#@' at the beginning of a line will set the results tab's title
+~~~
+
+
+### Usage
 just make sure your curser is somewhere inside a query and press `ctrl`+`enter` or run vscode command `Execute CloudWatchlogs query`
 ![simpleQuery][simpleQuery]
 
@@ -40,7 +46,7 @@ right click query file to open in new column
 results view allows you to edit the query before refreshing the results
 ![editQuery][editQuery]
 
-### aws authentication
+### AWS Authentication
 CloudWatchLogs client will use the `env` parameter as the [aws shared credentials profile][1] to use.  
 when no profile exists by that name, CloudWatchLogs client will fallback to [AWS environment variables][4]  
 
