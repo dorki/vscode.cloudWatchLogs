@@ -32,9 +32,15 @@ function parseTimes(durationStr: string) {
 }
 
 export function parseQuery(text: string, existing?: Query): Query {
+    const lines = text.trim().split("\n");
+    const title =
+        _(lines).
+            find(line => line.startsWith("#@"))?.
+            slice(2).
+            trim();
     const [settings, ...queryLines] =
         _.filter(
-            text.trim().split("\n"),
+            lines,
             line => !line.startsWith("#"));
     const query = queryLines.join("\n");
 
@@ -47,7 +53,8 @@ export function parseQuery(text: string, existing?: Query): Query {
             logGroup,
             times: parseTimes(durations),
             maxResults: parseInt(maxResults),
-            raw: text
+            raw: text,
+            title: existing?.title ?? title
         };
     }
 
@@ -60,6 +67,6 @@ export function parseQuery(text: string, existing?: Query): Query {
         times: parseTimes(durationStr.join(":")),
         maxResults: NaN,
         raw: text,
-        title: existing?.title
+        title: existing?.title ?? title
     };
 }
