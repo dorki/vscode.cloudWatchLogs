@@ -109,7 +109,8 @@ export function activate(context: vscode.ExtensionContext) {
 							vscode.ViewColumn.Active);
 						return;
 					case 'refresh':
-						query = parseQuery(message.query, query)
+						query.canceled = true;
+						query = parseQuery(message.query, query);
 						await executeQuery(query, panel);
 						return;
 					case 'duplicate':
@@ -118,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
 							BuildQueryResultsHtml(
 								context.extensionPath,
 								query,
-								[]);
+								{});
 						return;
 					case 'changeTitle':
 						const title =
@@ -228,7 +229,7 @@ export function activate(context: vscode.ExtensionContext) {
 				BuildQueryResultsHtml(
 					context.extensionPath,
 					query,
-					logGroups);
+					regionToLogGroupsMap);
 
 			let results: AWS.CloudWatchLogs.ResultRows[] = [];
 			const regionToQueryResultsMap: { [x: string]: AWS.CloudWatchLogs.GetQueryResultsResponse } = {};

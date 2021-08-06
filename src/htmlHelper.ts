@@ -86,7 +86,7 @@ export function BuildLogRecordHtml(logRecord: AWS.CloudWatchLogs.LogRecord) {
 export function BuildQueryResultsHtml(
     extensionPath: string,
     query: Query,
-    logGroups: string[]) {
+    regionToLogGroupsMap: { [region: string]: string[]}) {
 
     function pathPartsToUri(...pathParts: string[]) {
         return vscode.Uri.file(path.join(extensionPath, ...pathParts)).with({ scheme: 'vscode-resource' });
@@ -114,8 +114,8 @@ export function BuildQueryResultsHtml(
                     <a href onClick='openRaw()'>open raw table</a> - <a href onClick='duplicate()'>duplicate tab</a> - <a href onClick='changeTitle()'>change title</a>
                 </div>
                 <h4>Time range: ${formatTime(query.times.start)} - ${formatTime(query.times.end)} (local)</h4>
-                <h4>Log groups: ${logGroups.join(", ")}</h4>
-                <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()" onpaste="formatPastedText()">${query.raw}</pre>
+                <h4>Log groups: ${_.map(regionToLogGroupsMap, (logGroups, region)=>`${region}: ${logGroups.join(", ")}`).join(" ")}</h4>
+                <pre id='rawQuery' contenteditable onkeyup="refreshOnCtrlEnter()" onpaste="formatPastedText()">${query.raw.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
                 <div class="tableContainer"> ${tableContainerInnerHtml} </div>
                 <script>var tableContainerInnerHtml=\"${tableContainerInnerHtml.replace(/\s+/g, ' ').trim()}\"</script>
                 <script type="text/javascript" charset="utf8" src="${pathPartsToUri('src', 'script.js')}"></script>

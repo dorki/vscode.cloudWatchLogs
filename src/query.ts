@@ -35,7 +35,7 @@ export function parseQuery(text: string, existing?: Query): Query {
     const lines = text.trim().split("\n");
     const title =
         _(lines).
-            find(line => line.startsWith("#@"))?.
+            find(line => line.startsWith("#@") || line.startsWith("#!"))?.
             slice(2).
             trim();
     const [settings, ...queryLines] =

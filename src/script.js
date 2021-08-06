@@ -138,7 +138,6 @@ const changeTitle = () => {
     });
 }
 const openRaw = () => {
-
     const table = $('#resultsTable').DataTable();
     const visibleColumns = table.columns().visible();
 
