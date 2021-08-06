@@ -1,3 +1,7 @@
+### version 0.5.2
+- fix - log group names were not displayed correctly in the results view
+- fix - escaping '<' and '>' in the query text (for using regex)
+
 ### version 0.5.1
 - support predefind tab title (use #@TITLE as any line in the query text)
 
