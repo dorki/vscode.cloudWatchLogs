@@ -1,3 +1,6 @@
+### version 0.5.3
+- fix - paste events in the raw query editor
+
 ### version 0.5.2
 - fix - log group names were not displayed correctly in the results view
 - fix - escaping '<' and '>' in the query text (for using regex)
