@@ -123,9 +123,12 @@ const refreshOnCtrlEnter = () => {
     }
 }
 const formatPastedText = () => {
-    event.preventDefault()
-    const text = event.clipboardData.getData("text/plain");
-    document.execCommand('insertText', false, text)
+    event.preventDefault();
+    const textNode = document.createTextNode(event.clipboardData.getData("text/plain"));
+    const selection = window.getSelection();
+    selection.deleteFromDocument();
+    selection.getRangeAt(0).insertNode(textNode);
+    selection.setPosition(textNode, textNode.length);
 }
 const duplicate = () => {
     vscode.postMessage({
