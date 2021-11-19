@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 	InitializeQueryFiles(context);
 
 	async function GoToLog(logPtr: string, env: string, region: string) {
-		const credentials = await getEnvCredentials(env);
+		const credentials = await getEnvCredentials(env, region);
 		const logs = new AWS.CloudWatchLogs({ credentials, region });
 
 		const logRecordResponse = await logs.getLogRecord({ logRecordPointer: logPtr }).promise();
@@ -164,7 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
-		const creds = await getEnvCredentials(query.env);
+		const creds = await getEnvCredentials(query.env, query.regions[0]);
 
 		const regionToLogsClientMap =
 			_(query.regions).
@@ -206,7 +206,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
-			catch (error) {
+			catch (error: any) {
 				vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
 				return;
 			}
@@ -324,7 +324,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const creds = await getEnvCredentials(env);
+		const creds = await getEnvCredentials(env, region);
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region });
 		const describeQueriesResponse = await logs.describeQueries().promise();
 

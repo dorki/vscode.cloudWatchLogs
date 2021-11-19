@@ -168,7 +168,7 @@
 	"dependencies": {
 		"@types/lodash": "^4.14.157",
 		"as-table": "^1.0.55",
-		"aws-sdk": "^2.715.0",
+		"aws-sdk": "^2.1032.0",
 		"clipboardy": "^2.3.0",
 		"datatables.net": "^1.10.22",
 		"datatables.net-dt": "^1.10.22",

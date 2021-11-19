@@ -1,14 +1,14 @@
+import * as AWS from 'aws-sdk';
 import { execSync } from 'child_process';
 import * as vscode from 'vscode';
-import * as AWS from 'aws-sdk';
 
 let envToCredentials: { [id: string]: AWS.Credentials } = {};
 
-export async function getEnvCredentials(env: string) {
+export async function getEnvCredentials(env: string, region: string) {
 
     async function validateCredentials(credentials: AWS.Credentials) {
         try {
-            await new AWS.STS({ credentials }).getCallerIdentity().promise();
+            await new AWS.STS({ credentials, region }).getCallerIdentity().promise();
             return true;
         }
         catch {
