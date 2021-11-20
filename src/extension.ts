@@ -206,7 +206,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
-			catch (error: any) {
+			catch (error) {
 				vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
 				return;
 			}
