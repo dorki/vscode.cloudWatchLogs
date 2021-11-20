@@ -1,3 +1,6 @@
+### version 0.5.4
+- support aws partitions (us-gov, cn)
+
 ### version 0.5.3
 - fix - paste events in the raw query editor
 
