@@ -242,7 +242,7 @@ export function activate(context: vscode.ExtensionContext) {
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
 			catch (error) {
-                const awsError = <AWSError>error;
+				const awsError = <AWSError>error;
 				vscode.window.showErrorMessage(`${awsError.name}, error: ${awsError.message}`);
 				return;
 			}
