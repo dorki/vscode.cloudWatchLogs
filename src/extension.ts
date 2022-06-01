@@ -1,6 +1,8 @@
 import * as asTable from 'as-table';
 import * as AWS from 'aws-sdk';
 import { AWSError } from 'aws-sdk';
+import { NextToken } from 'aws-sdk/clients/acm';
+import { DescribeLogGroupsRequest, LogGroup } from 'aws-sdk/clients/cloudwatchlogs';
 import * as clipboardy from 'clipboardy';
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
@@ -169,6 +171,8 @@ export function activate(context: vscode.ExtensionContext) {
 		return true;
 	}
 
+    const responseGroupCache: { [envRegion: string]: LogGroup[] } = {};
+
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env, query.regions[0]);
 
@@ -179,22 +183,47 @@ export function activate(context: vscode.ExtensionContext) {
 				value();
 
 		const logGroups = query.logGroup.split(',');
+        const regionToLogGroupsMap: { [region: string]: string[] } = {};
 
-		const regionToLogGroupsMap: { [region: string]: string[] } = {};
-		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
-			const describeLogGroupsResponse = await logsClient.describeLogGroups().promise();
-			regionToLogGroupsMap[region] =
-				_(logGroups).
-					map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
-					flatMap(
-						logGroupRegex =>
-							_.filter(
-								describeLogGroupsResponse.logGroups,
-								logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
-					map(logGroup => logGroup.logGroupName!).
-					uniq().
-					value();
-		}
+        for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
+
+            let nextToken: NextToken | undefined = undefined;
+            const cacheKey = `${query.env}.${region}`;
+
+            if (!responseGroupCache[cacheKey]) {
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Notification,
+                    cancellable: false,
+                    title: `Fetching log groups from ${region} in '${query.env}''...`
+                }, async () => {
+                    let responseGroups: LogGroup[] = [];
+                    do {
+                        const requestOptions: DescribeLogGroupsRequest = {
+                            logGroupNamePrefix: undefined,
+                            nextToken: nextToken  
+                        };
+
+                        const response = await logsClient.describeLogGroups(requestOptions).promise();
+                        nextToken = response.nextToken;
+                        responseGroups = responseGroups.concat(<LogGroup[]>response.logGroups);
+                    } while (nextToken != null);
+
+                    responseGroupCache[cacheKey] = responseGroups;
+                });
+            }
+
+            regionToLogGroupsMap[region] =
+                    _(logGroups).
+                        map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
+                        flatMap(
+                            logGroupRegex =>
+                                _.filter(
+                                    responseGroupCache[cacheKey],
+                                    logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
+                        map(logGroup => logGroup.logGroupName!).
+                        uniq().
+                        value();
+        }
 
 		const regionToStartQueryIdMap: { [x: string]: string } = {};
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
