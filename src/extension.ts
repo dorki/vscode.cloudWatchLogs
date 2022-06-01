@@ -1,5 +1,6 @@
 import * as asTable from 'as-table';
 import * as AWS from 'aws-sdk';
+import { AWSError } from 'aws-sdk';
 import * as clipboardy from 'clipboardy';
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
@@ -97,10 +98,11 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.onDidReceiveMessage(
 			async message => {
 				switch (message.command) {
-					case 'goToLog':
+					case 'goToLog': {
 						await GoToLog(message.text, query.env, message.region);
 						return;
-					case 'openRaw':
+                    }
+					case 'openRaw': {
 						await vscode.window.showTextDocument(
 							await vscode.workspace.openTextDocument({
 								content: formatResultsRawTable(message.fieldNames, message.rows),
@@ -108,12 +110,14 @@ export function activate(context: vscode.ExtensionContext) {
 							}),
 							vscode.ViewColumn.Active);
 						return;
-					case 'refresh':
+                    }
+					case 'refresh': {
 						query.canceled = true;
 						query = parseQuery(message.query, query);
 						await executeQuery(query, panel);
 						return;
-					case 'duplicate':
+                    }
+					case 'duplicate': {
 						const duplicatedPanel = createQueryWebViewPanel(query);
 						duplicatedPanel.webview.html =
 							BuildQueryResultsHtml(
@@ -121,7 +125,8 @@ export function activate(context: vscode.ExtensionContext) {
 								query,
 								{});
 						return;
-					case 'changeTitle':
+                    }
+					case 'changeTitle': {
 						const title =
 							await vscode.window.showInputBox({
 								placeHolder: 'Set title text',
@@ -141,6 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						query.title = title;
 						return;
+                    }
 				}
 			},
 			undefined,
@@ -170,9 +176,9 @@ export function activate(context: vscode.ExtensionContext) {
 			_(query.regions).
 				keyBy().
 				mapValues(region => new AWS.CloudWatchLogs({ credentials: creds, region })).
-				value()
+				value();
 
-		let logGroups = query.logGroup.split(',');
+		const logGroups = query.logGroup.split(',');
 
 		const regionToLogGroupsMap: { [region: string]: string[] } = {};
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
@@ -207,7 +213,8 @@ export function activate(context: vscode.ExtensionContext) {
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
 			catch (error) {
-				vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
+                const awsError = <AWSError>error;
+				vscode.window.showErrorMessage(`${awsError.name}, error: ${awsError.message}`);
 				return;
 			}
 		}
@@ -254,7 +261,7 @@ export function activate(context: vscode.ExtensionContext) {
 					results =
 						_.flatMap(
 							regionToQueryResultsMap,
-							queryResultsResponse => queryResultsResponse.results ?? [])
+							queryResultsResponse => queryResultsResponse.results ?? []);
 
 					currentPanel.title = getPanelTitle(query, results.length);
 
@@ -266,8 +273,8 @@ export function activate(context: vscode.ExtensionContext) {
 							value();
 
 					if (fields.length > 0) {
-						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? [])
-						if (newFieldExists) {
+						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? []);
+                        if (newFieldExists) {
 							query.queryResultsFieldNames = fields;
 						}
 
@@ -294,7 +301,7 @@ export function activate(context: vscode.ExtensionContext) {
 				getPanelIconPath(
 					query.canceled || token.isCancellationRequested
 						? "error"
-						: "done")
+						: "done");
 		});
 	}
 
@@ -328,14 +335,14 @@ export function activate(context: vscode.ExtensionContext) {
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region });
 		const describeQueriesResponse = await logs.describeQueries().promise();
 
-		var queries =
+		const queries =
 			_(describeQueriesResponse.queries).
 				map(
 					query => {
 						return {
 							createTime: query.createTime,
 							queryString: query.queryString?.substr(query.queryString?.indexOf("|") + 2)
-						}
+						};
 					}).
 				groupBy(query => query.queryString).
 				map(
@@ -343,7 +350,7 @@ export function activate(context: vscode.ExtensionContext) {
 						return {
 							queryString,
 							createTime: _(queries).map(query => query.createTime).max()!
-						}
+						};
 					}).
 				orderBy(_ => _.createTime, "desc").
 				value();
