@@ -103,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'goToLog': {
 						await GoToLog(message.text, query.env, message.region);
 						return;
-                    }
+					}
 					case 'openRaw': {
 						await vscode.window.showTextDocument(
 							await vscode.workspace.openTextDocument({
@@ -112,13 +112,13 @@ export function activate(context: vscode.ExtensionContext) {
 							}),
 							vscode.ViewColumn.Active);
 						return;
-                    }
+					}
 					case 'refresh': {
 						query.canceled = true;
 						query = parseQuery(message.query, query);
 						await executeQuery(query, panel);
 						return;
-                    }
+					}
 					case 'duplicate': {
 						const duplicatedPanel = createQueryWebViewPanel(query);
 						duplicatedPanel.webview.html =
@@ -127,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
 								query,
 								{});
 						return;
-                    }
+					}
 					case 'changeTitle': {
 						const title =
 							await vscode.window.showInputBox({
@@ -148,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						query.title = title;
 						return;
-                    }
+					}
 				}
 			},
 			undefined,
@@ -171,7 +171,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return true;
 	}
 
-    const responseGroupCache: { [envRegion: string]: LogGroup[] } = {};
+	const responseGroupCache: { [envRegion: string]: LogGroup[] } = {};
 
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env, query.regions[0]);
@@ -183,47 +183,47 @@ export function activate(context: vscode.ExtensionContext) {
 				value();
 
 		const logGroups = query.logGroup.split(',');
-        const regionToLogGroupsMap: { [region: string]: string[] } = {};
+		const regionToLogGroupsMap: { [region: string]: string[] } = {};
 
-        for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
+		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
 
-            let nextToken: NextToken | undefined = undefined;
-            const cacheKey = `${query.env}.${region}`;
+			let nextToken: NextToken | undefined = undefined;
+			const cacheKey = `${query.env}.${region}`;
 
-            if (!responseGroupCache[cacheKey]) {
-                await vscode.window.withProgress({
-                    location: vscode.ProgressLocation.Notification,
-                    cancellable: false,
-                    title: `Fetching log groups from ${region} in '${query.env}''...`
-                }, async () => {
-                    let responseGroups: LogGroup[] = [];
-                    do {
-                        const requestOptions: DescribeLogGroupsRequest = {
-                            logGroupNamePrefix: undefined,
-                            nextToken: nextToken  
-                        };
+			if (!responseGroupCache[cacheKey]) {
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					cancellable: false,
+					title: `Fetching log groups from ${region} in '${query.env}''...`
+				}, async () => {
+					let responseGroups: LogGroup[] = [];
+					do {
+						const requestOptions: DescribeLogGroupsRequest = {
+							logGroupNamePrefix: undefined,
+							nextToken: nextToken  
+						};
 
-                        const response = await logsClient.describeLogGroups(requestOptions).promise();
-                        nextToken = response.nextToken;
-                        responseGroups = responseGroups.concat(<LogGroup[]>response.logGroups);
-                    } while (nextToken != null);
+						const response = await logsClient.describeLogGroups(requestOptions).promise();
+						nextToken = response.nextToken;
+						responseGroups = responseGroups.concat(<LogGroup[]>response.logGroups);
+					} while (nextToken != null);
 
-                    responseGroupCache[cacheKey] = responseGroups;
-                });
-            }
+					responseGroupCache[cacheKey] = responseGroups;
+				});
+			}
 
-            regionToLogGroupsMap[region] =
-                    _(logGroups).
-                        map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
-                        flatMap(
-                            logGroupRegex =>
-                                _.filter(
-                                    responseGroupCache[cacheKey],
-                                    logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
-                        map(logGroup => logGroup.logGroupName!).
-                        uniq().
-                        value();
-        }
+			regionToLogGroupsMap[region] =
+					_(logGroups).
+						map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
+						flatMap(
+							logGroupRegex =>
+								_.filter(
+									responseGroupCache[cacheKey],
+									logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
+						map(logGroup => logGroup.logGroupName!).
+						uniq().
+						value();
+		}
 
 		const regionToStartQueryIdMap: { [x: string]: string } = {};
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
