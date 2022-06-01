@@ -213,16 +213,16 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			regionToLogGroupsMap[region] =
-					_(logGroups).
-						map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
-						flatMap(
-							logGroupRegex =>
-								_.filter(
-									responseGroupCache[cacheKey],
-									logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
-						map(logGroup => logGroup.logGroupName!).
-						uniq().
-						value();
+				_(logGroups).
+					map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
+					flatMap(
+						logGroupRegex =>
+							_.filter(
+								responseGroupCache[cacheKey],
+								logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
+					map(logGroup => logGroup.logGroupName!).
+					uniq().
+					value();
 		}
 
 		const regionToStartQueryIdMap: { [x: string]: string } = {};
@@ -303,7 +303,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 					if (fields.length > 0) {
 						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? []);
-                        if (newFieldExists) {
+						if (newFieldExists) {
 							query.queryResultsFieldNames = fields;
 						}
 
