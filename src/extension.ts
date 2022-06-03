@@ -1,8 +1,6 @@
 import * as asTable from 'as-table';
 import * as AWS from 'aws-sdk';
-import { AWSError } from 'aws-sdk';
-import { NextToken } from 'aws-sdk/clients/acm';
-import { DescribeLogGroupsRequest, LogGroup } from 'aws-sdk/clients/cloudwatchlogs';
+import { LogGroup, NextToken } from 'aws-sdk/clients/cloudwatchlogs';
 import * as clipboardy from 'clipboardy';
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
@@ -171,7 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return true;
 	}
 
-	const responseGroupCache: { [envRegion: string]: LogGroup[] } = {};
+	const logGroupsCache: { [envRegion: string]: LogGroup[] } = {};
 
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env, query.regions[0]);
@@ -188,27 +186,28 @@ export function activate(context: vscode.ExtensionContext) {
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
 
 			let nextToken: NextToken | undefined = undefined;
-			const cacheKey = `${query.env}.${region}`;
+			const logGroupsCacheKey = `${query.env}.${region}`;
 
-			if (!responseGroupCache[cacheKey]) {
+			if (!logGroupsCache[logGroupsCacheKey]) {
 				await vscode.window.withProgress({
 					location: vscode.ProgressLocation.Notification,
 					cancellable: false,
 					title: `Fetching log groups from ${region} in '${query.env}''...`
 				}, async () => {
-					let responseGroups: LogGroup[] = [];
+					const regionLogGroups: LogGroup[] = [];
 					do {
-						const requestOptions: DescribeLogGroupsRequest = {
-							logGroupNamePrefix: undefined,
-							nextToken: nextToken  
-						};
-
-						const response = await logsClient.describeLogGroups(requestOptions).promise();
+						const response = 
+							await logsClient.
+								describeLogGroups({ nextToken: nextToken }).
+								promise();
+						regionLogGroups.push.apply(
+							regionLogGroups, 
+							response.logGroups as LogGroup[]);
 						nextToken = response.nextToken;
-						responseGroups = responseGroups.concat(<LogGroup[]>response.logGroups);
-					} while (nextToken != null);
+					} 
+					while (nextToken != null);
 
-					responseGroupCache[cacheKey] = responseGroups;
+					logGroupsCache[logGroupCacheKey] = regionLogGroups;
 				});
 			}
 
@@ -218,7 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
 					flatMap(
 						logGroupRegex =>
 							_.filter(
-								responseGroupCache[cacheKey],
+								logGroupsCache[logGroupsCacheKey],
 								logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
 					map(logGroup => logGroup.logGroupName!).
 					uniq().
@@ -242,7 +241,7 @@ export function activate(context: vscode.ExtensionContext) {
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
 			catch (error) {
-				const awsError = <AWSError>error;
+				const awsError = error as AWS.AWSError;
 				vscode.window.showErrorMessage(`${awsError.name}, error: ${awsError.message}`);
 				return;
 			}
