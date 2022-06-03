@@ -166,9 +166,11 @@
 		"typescript": "^3.9.7"
 	},
 	"dependencies": {
+		"@aws-sdk/client-cloudwatch-logs": "3.100.0",
+		"@aws-sdk/client-sts": "3.100.0",
+		"@aws-sdk/credential-providers": "3.100.0",
 		"@types/lodash": "^4.14.157",
 		"as-table": "^1.0.55",
-		"aws-sdk": "^2.1032.0",
 		"clipboardy": "^2.3.0",
 		"datatables.net": "^1.11.3",
 		"datatables.net-dt": "^1.10.22",

@@ -1,14 +1,16 @@
-import * as AWS from 'aws-sdk';
+import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
+import { fromIni, fromEnv } from "@aws-sdk/credential-providers";
+import { Credentials } from "@aws-sdk/types";
 import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 
-let envToCredentials: { [id: string]: AWS.Credentials } = {};
+let envToCredentials: { [id: string]: Credentials } = {};
 
 export async function getEnvCredentials(env: string, region: string) {
 
-    async function validateCredentials(credentials: AWS.Credentials) {
+    async function validateCredentials(credentials: Credentials) {
         try {
-            await new AWS.STS({ credentials, region }).getCallerIdentity().promise();
+            await new STSClient({ credentials, region }).send(new GetCallerIdentityCommand({}))
             return true;
         }
         catch {
@@ -21,7 +23,7 @@ export async function getEnvCredentials(env: string, region: string) {
         cancellable: false,
         title: 'Authenticating...'
     };
-    return await vscode.window.withProgress<AWS.Credentials>(
+    return await vscode.window.withProgress<Credentials>(
         withPrograssOptions,
         async () => {
             let credentials = envToCredentials[env];
@@ -34,13 +36,13 @@ export async function getEnvCredentials(env: string, region: string) {
                 execSync(authenticationCommand.replace('{env}', env));
             }
 
-            credentials = new AWS.SharedIniFileCredentials({ profile: env });
+            credentials = await fromIni({ profile: env })();
             if (await validateCredentials(credentials)) {
                 envToCredentials[env] = credentials;
                 return credentials;
             }
 
-            credentials = new AWS.EnvironmentCredentials("AWS");
+            credentials = await fromEnv()();
             if (await validateCredentials(credentials)) {
                 envToCredentials[env] = credentials;
                 return credentials;

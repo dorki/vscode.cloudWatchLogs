@@ -1,6 +1,7 @@
 import * as asTable from 'as-table';
-import * as AWS from 'aws-sdk';
-import { LogGroup, NextToken } from 'aws-sdk/clients/cloudwatchlogs';
+import { CloudWatchLogsClient, CloudWatchLogsServiceException } from '@aws-sdk/client-cloudwatch-logs';
+import { LogGroup, GetLogRecordCommand, DescribeLogGroupsCommand, StartQueryCommand, GetQueryResultsCommand, ResultField, GetQueryResultsResponse, DescribeQueriesCommand } from '@aws-sdk/client-cloudwatch-logs';
+import { paginateDescribeLogGroups } from '@aws-sdk/client-cloudwatch-logs';
 import * as clipboardy from 'clipboardy';
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
@@ -15,10 +16,16 @@ export function activate(context: vscode.ExtensionContext) {
 	InitializeQueryFiles(context);
 
 	async function GoToLog(logPtr: string, env: string, region: string) {
-		const credentials = await getEnvCredentials(env, region);
-		const logs = new AWS.CloudWatchLogs({ credentials, region });
 
-		const logRecordResponse = await logs.getLogRecord({ logRecordPointer: logPtr }).promise();
+		if (_.isEmpty(logPtr)) {
+			vscode.window.showInformationMessage("Stats queries does not have log record pointer");
+			return;
+		}
+
+		const credentials = await getEnvCredentials(env, region);
+		const logsClient = new CloudWatchLogsClient({ credentials, region });
+
+		const logRecordResponse = await logsClient.send(new GetLogRecordCommand({ logRecordPointer: logPtr }));
 		const panel =
 			vscode.window.createWebviewPanel(
 				`Log${Date.now()}`,
@@ -177,7 +184,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const regionToLogsClientMap =
 			_(query.regions).
 				keyBy().
-				mapValues(region => new AWS.CloudWatchLogs({ credentials: creds, region })).
+				mapValues(region => new CloudWatchLogsClient({ credentials: creds, region })).
 				value();
 
 		const logGroups = query.logGroup.split(',');
@@ -185,7 +192,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
 
-			let nextToken: NextToken | undefined = undefined;
 			const logGroupsCacheKey = `${query.env}.${region}`;
 
 			if (!logGroupsCache[logGroupsCacheKey]) {
@@ -195,17 +201,11 @@ export function activate(context: vscode.ExtensionContext) {
 					title: `Fetching log groups from ${region} in '${query.env}''...`
 				}, async () => {
 					const regionLogGroups: LogGroup[] = [];
-					do {
-						const response = 
-							await logsClient.
-								describeLogGroups({ nextToken: nextToken }).
-								promise();
+					for await (const page of paginateDescribeLogGroups({ client: logsClient }, {})) {
 						regionLogGroups.push.apply(
-							regionLogGroups, 
-							response.logGroups as LogGroup[]);
-						nextToken = response.nextToken;
-					} 
-					while (nextToken != null);
+							regionLogGroups,
+							page.logGroups as LogGroup[]);
+					}
 
 					logGroupsCache[logGroupsCacheKey] = regionLogGroups;
 				});
@@ -228,21 +228,20 @@ export function activate(context: vscode.ExtensionContext) {
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
 			try {
 				const startQueryResponse =
-					await logsClient.
-						startQuery({
+					await logsClient.send(
+						new StartQueryCommand({
 							startTime: query.times.start / 1000,
 							endTime: query.times.end / 1000,
 							queryString: query.query,
 							logGroupNames: regionToLogGroupsMap[region],
 							limit: query.maxResults
-						}).
-						promise();
+						}));
 
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
 			catch (error) {
-				const awsError = error as AWS.AWSError;
-				vscode.window.showErrorMessage(`${awsError.name}, error: ${awsError.message}`);
+				const serviceException = error as CloudWatchLogsServiceException
+				vscode.window.showErrorMessage(`${serviceException.name}, error: ${serviceException.message}`);
 				return;
 			}
 		}
@@ -266,15 +265,12 @@ export function activate(context: vscode.ExtensionContext) {
 					query,
 					regionToLogGroupsMap);
 
-			let results: AWS.CloudWatchLogs.ResultRows[] = [];
-			const regionToQueryResultsMap: { [x: string]: AWS.CloudWatchLogs.GetQueryResultsResponse } = {};
+			let results: ResultField[][] = [];
+			const regionToQueryResultsMap: { [x: string]: GetQueryResultsResponse } = {};
 			do {
 				for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
 					if (regionToQueryResultsMap[region]?.status !== "Complete") {
-						regionToQueryResultsMap[region] =
-							await logsClient.
-								getQueryResults({ queryId: regionToStartQueryIdMap[region] }).
-								promise();
+						regionToQueryResultsMap[region] = await logsClient.send(new GetQueryResultsCommand({ queryId: regionToStartQueryIdMap[region] }));
 					}
 				}
 
@@ -360,8 +356,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		const creds = await getEnvCredentials(env, region);
-		const logs = new AWS.CloudWatchLogs({ credentials: creds, region });
-		const describeQueriesResponse = await logs.describeQueries().promise();
+		const logsClient = new CloudWatchLogsClient({ credentials: creds, region });
+		const describeQueriesResponse = await logsClient.send(new DescribeQueriesCommand({}));
 
 		const queries =
 			_(describeQueriesResponse.queries).

@@ -87,7 +87,7 @@ function handleResults(fieldNames, regionToQueryResultsMap) {
     for ([_, region, fieldNameToValueMap] of timeAndRegionAndFieldNameToValue) {
 
         table.row.add([
-            `<button onclick="goToLog(\'${fieldNameToValueMap.get("@ptr")}\', \'${region}\')">🔍</button>`,
+            `<button onclick="goToLog(\'${fieldNameToValueMap.get("@ptr") ?? ""}\', \'${region}\')">🔍</button>`,
             ...fieldNames.map(fieldName => fieldNameToValueMap.get(fieldName))
         ]);
     }
