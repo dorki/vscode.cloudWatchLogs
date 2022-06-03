@@ -207,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 					} 
 					while (nextToken != null);
 
-					logGroupsCache[logGroupCacheKey] = regionLogGroups;
+					logGroupsCache[logGroupsCacheKey] = regionLogGroups;
 				});
 			}
 
