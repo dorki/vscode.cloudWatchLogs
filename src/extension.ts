@@ -1,5 +1,6 @@
 import * as asTable from 'as-table';
 import * as AWS from 'aws-sdk';
+import { LogGroup, NextToken } from 'aws-sdk/clients/cloudwatchlogs';
 import * as clipboardy from 'clipboardy';
 import * as _ from 'lodash';
 import * as vscode from 'vscode';
@@ -97,10 +98,11 @@ export function activate(context: vscode.ExtensionContext) {
 		panel.webview.onDidReceiveMessage(
 			async message => {
 				switch (message.command) {
-					case 'goToLog':
+					case 'goToLog': {
 						await GoToLog(message.text, query.env, message.region);
 						return;
-					case 'openRaw':
+					}
+					case 'openRaw': {
 						await vscode.window.showTextDocument(
 							await vscode.workspace.openTextDocument({
 								content: formatResultsRawTable(message.fieldNames, message.rows),
@@ -108,12 +110,14 @@ export function activate(context: vscode.ExtensionContext) {
 							}),
 							vscode.ViewColumn.Active);
 						return;
-					case 'refresh':
+					}
+					case 'refresh': {
 						query.canceled = true;
 						query = parseQuery(message.query, query);
 						await executeQuery(query, panel);
 						return;
-					case 'duplicate':
+					}
+					case 'duplicate': {
 						const duplicatedPanel = createQueryWebViewPanel(query);
 						duplicatedPanel.webview.html =
 							BuildQueryResultsHtml(
@@ -121,7 +125,8 @@ export function activate(context: vscode.ExtensionContext) {
 								query,
 								{});
 						return;
-					case 'changeTitle':
+					}
+					case 'changeTitle': {
 						const title =
 							await vscode.window.showInputBox({
 								placeHolder: 'Set title text',
@@ -141,6 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						query.title = title;
 						return;
+					}
 				}
 			},
 			undefined,
@@ -163,6 +169,8 @@ export function activate(context: vscode.ExtensionContext) {
 		return true;
 	}
 
+	const logGroupsCache: { [envRegion: string]: LogGroup[] } = {};
+
 	async function executeQuery(query: Query, panel?: vscode.WebviewPanel) {
 		const creds = await getEnvCredentials(query.env, query.regions[0]);
 
@@ -170,20 +178,46 @@ export function activate(context: vscode.ExtensionContext) {
 			_(query.regions).
 				keyBy().
 				mapValues(region => new AWS.CloudWatchLogs({ credentials: creds, region })).
-				value()
+				value();
 
-		let logGroups = query.logGroup.split(',');
-
+		const logGroups = query.logGroup.split(',');
 		const regionToLogGroupsMap: { [region: string]: string[] } = {};
+
 		for (const [region, logsClient] of _.entries(regionToLogsClientMap)) {
-			const describeLogGroupsResponse = await logsClient.describeLogGroups().promise();
+
+			let nextToken: NextToken | undefined = undefined;
+			const logGroupsCacheKey = `${query.env}.${region}`;
+
+			if (!logGroupsCache[logGroupsCacheKey]) {
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					cancellable: false,
+					title: `Fetching log groups from ${region} in '${query.env}''...`
+				}, async () => {
+					const regionLogGroups: LogGroup[] = [];
+					do {
+						const response = 
+							await logsClient.
+								describeLogGroups({ nextToken: nextToken }).
+								promise();
+						regionLogGroups.push.apply(
+							regionLogGroups, 
+							response.logGroups as LogGroup[]);
+						nextToken = response.nextToken;
+					} 
+					while (nextToken != null);
+
+					logGroupsCache[logGroupCacheKey] = regionLogGroups;
+				});
+			}
+
 			regionToLogGroupsMap[region] =
 				_(logGroups).
 					map(logGroup => new RegExp(`^${logGroup.replace(/\*/g, '.*')}$`, "i")).
 					flatMap(
 						logGroupRegex =>
 							_.filter(
-								describeLogGroupsResponse.logGroups,
+								logGroupsCache[logGroupsCacheKey],
 								logGroup => logGroupRegex.test(logGroup.logGroupName ?? ""))).
 					map(logGroup => logGroup.logGroupName!).
 					uniq().
@@ -207,7 +241,8 @@ export function activate(context: vscode.ExtensionContext) {
 				regionToStartQueryIdMap[region] = startQueryResponse.queryId!;
 			}
 			catch (error) {
-				vscode.window.showErrorMessage(`${error.name}, error: ${error.message}`)
+				const awsError = error as AWS.AWSError;
+				vscode.window.showErrorMessage(`${awsError.name}, error: ${awsError.message}`);
 				return;
 			}
 		}
@@ -254,7 +289,7 @@ export function activate(context: vscode.ExtensionContext) {
 					results =
 						_.flatMap(
 							regionToQueryResultsMap,
-							queryResultsResponse => queryResultsResponse.results ?? [])
+							queryResultsResponse => queryResultsResponse.results ?? []);
 
 					currentPanel.title = getPanelTitle(query, results.length);
 
@@ -266,7 +301,7 @@ export function activate(context: vscode.ExtensionContext) {
 							value();
 
 					if (fields.length > 0) {
-						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? [])
+						const newFieldExists = !unorderedEquals(fields, query.queryResultsFieldNames ?? []);
 						if (newFieldExists) {
 							query.queryResultsFieldNames = fields;
 						}
@@ -294,7 +329,7 @@ export function activate(context: vscode.ExtensionContext) {
 				getPanelIconPath(
 					query.canceled || token.isCancellationRequested
 						? "error"
-						: "done")
+						: "done");
 		});
 	}
 
@@ -328,14 +363,14 @@ export function activate(context: vscode.ExtensionContext) {
 		const logs = new AWS.CloudWatchLogs({ credentials: creds, region });
 		const describeQueriesResponse = await logs.describeQueries().promise();
 
-		var queries =
+		const queries =
 			_(describeQueriesResponse.queries).
 				map(
 					query => {
 						return {
 							createTime: query.createTime,
 							queryString: query.queryString?.substr(query.queryString?.indexOf("|") + 2)
-						}
+						};
 					}).
 				groupBy(query => query.queryString).
 				map(
@@ -343,7 +378,7 @@ export function activate(context: vscode.ExtensionContext) {
 						return {
 							queryString,
 							createTime: _(queries).map(query => query.createTime).max()!
-						}
+						};
 					}).
 				orderBy(_ => _.createTime, "desc").
 				value();
