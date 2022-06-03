@@ -1,3 +1,6 @@
+### version 0.6.0
+- move to aws-sdk v3 to support pagination
+
 ### version 0.5.5
 - support log-groups pagination (thanks to @mbraude-chwy)
 
