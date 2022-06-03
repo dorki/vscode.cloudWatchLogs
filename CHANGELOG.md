@@ -1,3 +1,6 @@
+### version 0.5.5
+- support log-groups pagination (thanks to @mbraude-chwy)
+
 ### version 0.5.4
 - support aws partitions (us-gov, cn)
 
