@@ -171,7 +171,7 @@
 		"@aws-sdk/credential-providers": "3.100.0",
 		"@types/lodash": "^4.14.157",
 		"as-table": "^1.0.55",
-		"clipboardy": "^2.3.0",
+		"clipboardy": "^3.0.0",
 		"datatables.net": "^1.11.3",
 		"datatables.net-dt": "^1.10.22",
 		"jquery": "^3.5.1",
